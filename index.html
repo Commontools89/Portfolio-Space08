@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Manu Malempati's Space Portfolio</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+  <div id="loading-text">Loading...</div>
+  <div id="sketch-holder"></div>
+  <div id="landing-page">
+    <h1>Welcome to My Space</h1>
+  </div>
+  <div id="portfolio" class="hidden">
+    <nav>
+      <ul>
+        <li><a href="#" data-component="about">About</a></li>
+        <li><a href="#" data-component="contact">Contact</a></li>
+      </ul>
+    </nav>
+    <div class="content">
+      <!-- Component content will be loaded here dynamically -->
+    </div>
+  </div>
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
