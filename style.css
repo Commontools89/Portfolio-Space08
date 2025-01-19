@@ -540,10 +540,7 @@ h2 {
 
 .message.sent {
   margin-left: auto;
-  margin-right: 20px;
-  width: 70%;
-  display: flex;
-  justify-content: flex-end;
+  margin-right: 0;
   animation: slideInResponse 0.5s ease forwards;
 }
 
@@ -733,4 +730,17 @@ h2 {
   0% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.2); opacity: 0.7; }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* Desktop-specific styles only */
+@media screen and (min-width: 769px) {
+  #about h2 {
+    font-size: calc(2 * var(--base-font-size, 2em));
+  }
+
+  #about .about-content {
+    font-size: calc(1.5 * var(--base-content-size, 1em));
+    max-width: 800px;
+    margin: 0 auto;
+  }
 }
