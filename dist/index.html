@@ -2,24 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- Original viewport meta for desktop -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Manu Malempati's Space Portfolio</title>
+  
+  <!-- iOS specific meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Add this script to handle iOS zoom -->
+  <script>
+    // Only apply zoom prevention on iOS devices
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      const viewport = document.querySelector('meta[name="viewport"]');
+      viewport.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover";
+    }
+  </script>
+  
+  <title>Manu Malempati</title>
   
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <!-- Favicon links -->
-  <link rel="apple-touch-icon" sizes="180x180" href="./favicon/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="./favicon/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="./favicon/favicon-16x16.png">
-  <link rel="manifest" href="./favicon/site.webmanifest">
-  <link rel="mask-icon" href="./favicon/safari-pinned-tab.svg" color="#d5fa1b">
+  <!-- Updated Favicon Set -->
+  <link rel="shortcut icon" type="image/x-icon" href="/assets/favicon-0d3121d0.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="/favicon/site.webmanifest">
+  <!-- Theme Colors -->
   <meta name="msapplication-TileColor" content="#000000">
   <meta name="theme-color" content="#000000">
-  <script type="module" crossorigin src="/assets/index-20202351.js"></script>
-  <link rel="stylesheet" href="/assets/index-89bc2162.css">
+  <script type="module" crossorigin src="/assets/index-bb4234c4.js"></script>
+  <link rel="stylesheet" href="/assets/index-beb5797c.css">
 </head>
 <body>
   <div id="loading-text">Loading...</div>

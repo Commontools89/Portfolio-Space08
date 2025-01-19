@@ -26,7 +26,7 @@ body, html {
 }
 
 #landing-page h1 {
-  font-size: 5vw; /* Responsive font size */
+  font-size: 5vw;
   color: #d5fa1b;
   text-shadow: 0 0 10px #d5fa1b;
   cursor: pointer;
@@ -343,6 +343,7 @@ h2 {
 /* Media Queries for Responsiveness */
 @media screen and (max-width: 768px) {
   #landing-page h1 {
+    text-shadow: none;
     font-size: 8vw;
   }
 
@@ -362,30 +363,6 @@ h2 {
   .contact-form textarea,
   .contact-form button {
     font-size: 0.9em;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  #landing-page h1 {
-    font-size: 10vw;
-  }
-
-  h2 {
-    font-size: 2em;
-  }
-
-  nav a {
-    font-size: 1em;
-  }
-
-  .about-content {
-    font-size: 0.9em;
-  }
-
-  .contact-form input,
-  .contact-form textarea,
-  .contact-form button {
-    font-size: 0.8em;
   }
 
   .iphone-chat {

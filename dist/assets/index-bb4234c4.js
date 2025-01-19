@@ -53,7 +53,7 @@
             <div class="message received" style="animation-delay: 0.4s">
               <div class="message-content">
                 <div class="message-bubble">
-                  Thanks for your signal! I'll get back to you in a rotation.
+                  Got your signal! I'll get back to you in a rotation.
                 </div>
                 <div class="message-time">Just now</div>
               </div>
