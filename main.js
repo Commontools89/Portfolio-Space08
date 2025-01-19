@@ -87,20 +87,97 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Initialize EmailJS with your public key
+  (function() {
+    emailjs.init("Bb2IL9GPVGwGFwKmK"); // Add your public key from EmailJS dashboard
+  })();
+
   function setupContactForm() {
     const form = document.getElementById('contact-form');
     if (form) {
-      form.addEventListener('submit', (e) => {
+      const sendButton = form.querySelector('.send-button');
+      
+      // Button animations
+      sendButton.addEventListener('mousedown', () => {
+        sendButton.classList.add('hold');
+      });
+
+      sendButton.addEventListener('mouseup', () => {
+        sendButton.classList.remove('hold');
+        sendButton.classList.add('clicked');
+        setTimeout(() => {
+          sendButton.classList.remove('clicked');
+        }, 400);
+      });
+
+      // Form submission
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
         
-        // Here you would typically send the data to your server
-        console.log('Form submitted:', data);
-        
-        // For demonstration purposes, we'll just show an alert
-        alert('Thank you for your message! We will get back to you soon.');
-        form.reset();
+        // Get form data
+        const formData = {
+          from_name: form.querySelector('[name="from_name"]').value,
+          reply_to: form.querySelector('[name="reply_to"]').value,
+          message: form.querySelector('[name="message"]').value,
+        };
+
+        const chatMessages = document.querySelector('.chat-messages');
+
+        // Add user's message to chat
+        const userMessageHTML = `
+          <div class="message sent" style="animation-delay: 0.2s">
+            <div class="message-content">
+              <div class="message-bubble">
+                ${formData.message}
+              </div>
+              <div class="message-time">Just now</div>
+            </div>
+          </div>
+        `;
+        chatMessages.insertAdjacentHTML('beforeend', userMessageHTML);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        try {
+          // Send email using EmailJS
+          await emailjs.send(
+            'service_c7qjp5g', // Add your EmailJS service ID
+            'template_svorfoe', // Add your EmailJS template ID
+            formData
+          );
+
+          // Show success message
+          const responseHTML = `
+            <div class="message received" style="animation-delay: 0.4s">
+              <div class="message-content">
+                <div class="message-bubble">
+                  Thanks for your signal! I'll get back to you in a rotation.
+                </div>
+                <div class="message-time">Just now</div>
+              </div>
+            </div>
+          `;
+          chatMessages.insertAdjacentHTML('beforeend', responseHTML);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+          
+          // Clear form
+          form.reset();
+
+        } catch (error) {
+          console.error('Failed to send email:', error);
+          // Show error message
+          const errorHTML = `
+            <div class="message received" style="animation-delay: 0.4s">
+              <div class="message-content">
+                <div class="message-bubble error">
+                  Oops! Something went wrong. Please try again later.
+                </div>
+                <div class="message-time">Just now</div>
+              </div>
+            </div>
+          `;
+          chatMessages.insertAdjacentHTML('beforeend', errorHTML);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
       });
     }
   }
