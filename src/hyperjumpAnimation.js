@@ -63,10 +63,11 @@ export default function createHyperjumpAnimation(p) {
       this.y = p.random(-p.height, p.height);
       this.z = p.random(p.width);
       this.pz = this.z;
+      this.baseSpeed = window.innerWidth <= 767 ? 3 : 7.5;
     }
 
     update() {
-      this.z = this.z - speed;
+      this.z = this.z - (transitioning ? speed : this.baseSpeed);
       if (this.z < 1) {
         this.z = p.width;
         this.x = p.random(-p.width, p.width);
