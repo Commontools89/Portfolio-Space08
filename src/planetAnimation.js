@@ -604,7 +604,91 @@ export function createPlanet() {
     { minLat: 25.12, maxLat: 25.32, minLong: 55.12, maxLong: 55.32, density: 30 }, // Dubai Coast
     { minLat: 1.22, maxLat: 1.42, minLong: 103.82, maxLong: 104.02, density: 30 }, // Singapore
 
-    // ... (continuing with more precise coastlines) ...
+    // CONTINENTAL OUTLINE PRECISION
+    
+    // NORTH AMERICA OUTLINE
+    // Northern Edge
+    { minLat: 71.32, maxLat: 71.42, minLong: -156.88, maxLong: -156.78, density: 30 }, // Point Barrow
+    { minLat: 68.35, maxLat: 68.45, minLong: -166.72, maxLong: -166.62, density: 30 }, // Cape Prince of Wales
+    { minLat: 83.02, maxLat: 83.12, minLong: -75.92, maxLong: -75.82, density: 30 }, // Northern Greenland
+    
+    // Eastern Seaboard Outline
+    { minLat: 44.95, maxLat: 45.05, minLong: -66.98, maxLong: -66.88, density: 35 }, // Bay of Fundy
+    { minLat: 42.32, maxLat: 42.42, minLong: -70.95, maxLong: -70.85, density: 35 }, // Cape Cod
+    { minLat: 35.22, maxLat: 35.32, minLong: -75.52, maxLong: -75.42, density: 35 }, // Cape Hatteras
+    { minLat: 24.52, maxLat: 24.62, minLong: -81.82, maxLong: -81.72, density: 35 }, // Florida Keys
+
+    // Western Edge
+    { minLat: 48.35, maxLat: 48.45, minLong: -124.72, maxLong: -124.62, density: 35 }, // Olympic Peninsula
+    { minLat: 37.78, maxLat: 37.88, minLong: -122.52, maxLong: -122.42, density: 35 }, // San Francisco
+    { minLat: 32.52, maxLat: 32.62, minLong: -117.12, maxLong: -117.02, density: 35 }, // San Diego
+
+    // SOUTH AMERICA OUTLINE
+    // Northern Coast
+    { minLat: 12.42, maxLat: 12.52, minLong: -71.62, maxLong: -71.52, density: 35 }, // Guajira Peninsula
+    { minLat: 10.62, maxLat: 10.72, minLong: -61.92, maxLong: -61.82, density: 35 }, // Trinidad
+    { minLat: 5.52, maxLat: 5.62, minLong: -55.22, maxLong: -55.12, density: 35 }, // French Guiana
+
+    // Southern Tip
+    { minLat: -54.88, maxLat: -54.78, minLong: -67.28, maxLong: -67.18, density: 35 }, // Cape Horn
+    { minLat: -51.72, maxLat: -51.62, minLong: -69.12, maxLong: -69.02, density: 35 }, // Magellan Strait
+    { minLat: -42.52, maxLat: -42.42, minLong: -74.92, maxLong: -74.82, density: 35 }, // Chilean Coast
+
+    // EURASIA OUTLINE
+    // Western Europe
+    { minLat: 43.32, maxLat: 43.42, minLong: -9.18, maxLong: -9.08, density: 35 }, // Cape Finisterre
+    { minLat: 51.42, maxLat: 51.52, minLong: 1.42, maxLong: 1.52, density: 35 }, // Dover Strait
+    { minLat: 60.52, maxLat: 60.62, minLong: 4.82, maxLong: 4.92, density: 35 }, // Norwegian Coast
+
+    // Mediterranean Outline
+    { minLat: 36.12, maxLat: 36.22, minLong: -5.42, maxLong: -5.32, density: 35 }, // Gibraltar
+    { minLat: 37.92, maxLat: 38.02, minLong: 15.62, maxLong: 15.72, density: 35 }, // Sicily
+    { minLat: 40.82, maxLat: 40.92, minLong: 28.92, maxLong: 29.02, density: 35 }, // Bosphorus
+
+    // Asian Coast
+    { minLat: 31.22, maxLat: 31.32, minLong: 121.42, maxLong: 121.52, density: 35 }, // Yangtze Delta
+    { minLat: 35.12, maxLat: 35.22, minLong: 139.72, maxLong: 139.82, density: 35 }, // Tokyo Bay
+    { minLat: 1.22, maxLat: 1.32, minLong: 103.82, maxLong: 103.92, density: 35 }, // Singapore
+
+    // AFRICA OUTLINE
+    // Mediterranean Coast
+    { minLat: 31.22, maxLat: 31.32, minLong: 32.28, maxLong: 32.38, density: 35 }, // Nile Delta
+    { minLat: 36.82, maxLat: 36.92, minLong: 3.02, maxLong: 3.12, density: 35 }, // Algiers
+    { minLat: 35.82, maxLat: 35.92, minLong: -5.92, maxLong: -5.82, density: 35 }, // Tangier
+
+    // Horn of Africa
+    { minLat: 11.52, maxLat: 11.62, minLong: 43.12, maxLong: 43.22, density: 35 }, // Bab el-Mandeb
+    { minLat: 11.92, maxLat: 12.02, minLong: 51.22, maxLong: 51.32, density: 35 }, // Cape Guardafui
+    { minLat: -4.62, maxLat: -4.52, minLong: 39.62, maxLong: 39.72, density: 35 }, // Zanzibar
+
+    // Southern Africa
+    { minLat: -34.32, maxLat: -34.22, minLong: 18.42, maxLong: 18.52, density: 35 }, // Cape of Good Hope
+    { minLat: -25.92, maxLat: -25.82, minLong: 32.52, maxLong: 32.62, density: 35 }, // Maputo
+    { minLat: -15.92, maxLat: -15.82, minLong: 5.62, maxLong: 5.72, density: 35 }, // Angola Coast
+
+    // OCEANIA OUTLINE
+    // Australia
+    { minLat: -33.85, maxLat: -33.75, minLong: 151.22, maxLong: 151.32, density: 35 }, // Sydney
+    { minLat: -31.92, maxLat: -31.82, minLong: 115.92, maxLong: 116.02, density: 35 }, // Perth
+    { minLat: -12.42, maxLat: -12.32, minLong: 130.82, maxLong: 130.92, density: 35 }, // Darwin
+
+    // New Zealand
+    { minLat: -36.82, maxLat: -36.72, minLong: 174.72, maxLong: 174.82, density: 35 }, // Auckland
+    { minLat: -46.42, maxLat: -46.32, minLong: 168.32, maxLong: 168.42, density: 35 }, // South Island
+
+    // MAJOR PENINSULAS OUTLINE
+    { minLat: 68.92, maxLat: 69.02, minLong: 20.92, maxLong: 21.02, density: 35 }, // Scandinavian
+    { minLat: 41.02, maxLat: 41.12, minLong: 28.92, maxLong: 29.02, density: 35 }, // Anatolian
+    { minLat: 25.32, maxLat: 25.42, minLong: 56.32, maxLong: 56.42, density: 35 }, // Arabian
+
+    // CONNECTING LANDMASS OUTLINES
+    { minLat: 54.52, maxLat: 54.62, minLong: -5.92, maxLong: -5.82, density: 30 }, // Irish Sea
+    { minLat: 35.82, maxLat: 35.92, minLong: -5.62, maxLong: -5.52, density: 30 }, // Gibraltar Strait
+    { minLat: 40.92, maxLat: 41.02, minLong: 28.92, maxLong: 29.02, density: 30 }, // Bosphorus
+    { minLat: 24.52, maxLat: 24.62, minLong: 35.52, maxLong: 35.62, density: 30 }, // Red Sea
+    { minLat: 25.52, maxLat: 25.62, minLong: 56.92, maxLong: 57.02, density: 30 }, // Strait of Hormuz
+
+    // ... (continuing with more precise outlines) ...
   ];
 
   const points = [];
