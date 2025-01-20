@@ -721,3 +721,31 @@ h2 {
     margin: 0 auto;
   }
 }
+
+#planet {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#planetCanvas {
+  width: 100vw !important;
+  height: 100vh !important;
+  cursor: grab;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+#planetCanvas:active {
+  cursor: grabbing;
+}

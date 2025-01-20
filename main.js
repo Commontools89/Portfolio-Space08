@@ -1,6 +1,8 @@
 import createHyperjumpAnimation from './src/hyperjumpAnimation.js';
 import About from './src/components/About.js';
 import Contact from './src/components/Contact.js';
+import Planet from './src/components/Planet.js';
+import { createPlanet } from './src/planetAnimation.js';
 
 console.log('main.js is loaded');
 
@@ -47,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const portfolio = document.getElementById('portfolio');
   const landingPageText = document.querySelector('#landing-page h1');
   const contentDiv = document.querySelector('.content');
+  let currentPlanet = null;
 
   // Load initial content
   contentDiv.innerHTML = About();
@@ -56,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
       landingPageText.classList.add('animate-out');
       landingPage.style.background = 'transparent';
       
-      // Start the transition immediately
       window.startTransition(() => {
         landingPage.classList.add('hidden');
         portfolio.classList.remove('hidden');
@@ -72,8 +74,18 @@ document.addEventListener('DOMContentLoaded', () => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const targetComponent = link.getAttribute('data-component');
+
+      // Clean up existing planet instance if it exists
+      if (currentPlanet) {
+        currentPlanet.dispose && currentPlanet.dispose();
+        currentPlanet = null;
+      }
       
       window.startTransition(() => {
+        // Clear previous content
+        contentDiv.innerHTML = '';
+        
+        // Load new content
         switch(targetComponent) {
           case 'about':
             contentDiv.innerHTML = About();
@@ -81,6 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
           case 'contact':
             contentDiv.innerHTML = Contact();
             setupContactForm();
+            break;
+          case 'planet':
+            contentDiv.innerHTML = Planet();
+            setTimeout(() => {
+              currentPlanet = createPlanet();
+            }, 100);
             break;
         }
       });
