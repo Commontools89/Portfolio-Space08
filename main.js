@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Add event listeners for navigation
   const navLinks = document.querySelectorAll('nav a');
+  
   navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -80,6 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPlanet.dispose && currentPlanet.dispose();
         currentPlanet = null;
       }
+      
+      // No game page; focusing on planet and other sections
       
       window.startTransition(() => {
         // Clear previous content
@@ -104,6 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
+
+  
 
   // Initialize EmailJS with your public key
   (function() {
