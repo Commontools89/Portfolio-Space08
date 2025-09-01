@@ -421,35 +421,35 @@ h2 {
   }
   /* Use a lighter glitch on mobile to avoid harsh flicker */
   #about h2::before {
-    text-shadow: -2px 0 #ff00f0;
-    animation: glitch-lite-a 2.4s steps(14) infinite;
+    text-shadow: -3px 0 #ff00f0;
+    animation: glitch-lite-a 1.6s steps(18) infinite, glitch-flicker 2.2s steps(24) infinite;
     clip: auto;
   }
   #about h2::after {
-    text-shadow: 2px 0 #00fff9;
-    animation: glitch-lite-b 2.4s steps(14) infinite reverse;
+    text-shadow: 3px 0 #00fff9;
+    animation: glitch-lite-b 1.6s steps(18) infinite reverse, glitch-flicker 2.2s steps(24) infinite;
     clip: auto;
   }
 }
 
 @keyframes glitch-lite-a {
   0% { transform: translate(0,0); }
-  25% { transform: translate(-1px, 0.5px); }
-  50% { transform: translate(1px, -0.5px); }
-  75% { transform: translate(-1px, -0.5px); }
+  25% { transform: translate(-2px, 1px); }
+  50% { transform: translate(2px, -1px); }
+  75% { transform: translate(-2px, -1px); }
   100% { transform: translate(0,0); }
 }
 
 @keyframes glitch-lite-b {
   0% { transform: translate(0,0); }
-  25% { transform: translate(1px, -0.5px); }
-  50% { transform: translate(-1px, 0.5px); }
-  75% { transform: translate(1px, 0.5px); }
+  25% { transform: translate(2px, -1px); }
+  50% { transform: translate(-2px, 1px); }
+  75% { transform: translate(2px, 1px); }
   100% { transform: translate(0,0); }
 }
 
 /* Respect reduced motion: minimize heavy glitch on small screens */
-@media (prefers-reduced-motion: reduce), (max-width: 420px) {
+@media (prefers-reduced-motion: reduce) {
   #about h2::before,
   #about h2::after {
     animation: none !important;
