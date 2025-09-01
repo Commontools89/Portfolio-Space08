@@ -1,10 +1,27 @@
 import * as THREE from 'three';
 import { feature } from 'topojson-client';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { DragControls } from 'three/examples/jsm/controls/DragControls';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { createOrbSync } from './orbSync.js';
 
 export function createPlanet() {
   const scene = new THREE.Scene();
+  // Scene mode: 'planet' or 'house'
+  let mode = 'planet';
+  // Group for all Earth meshes so we can rotate the planet as a whole
+  const earthGroup = new THREE.Group();
+  scene.add(earthGroup);
+  // House group (hidden initially)
+  const houseGroup = new THREE.Group();
+  houseGroup.visible = false;
+  scene.add(houseGroup);
+  let birds = [];
+  const gltfLoader = new GLTFLoader();
+  let treeTrunks = null; // InstancedMesh placeholders (optional)
+  let treeCrowns = null;
+  let savedCam = { position: new THREE.Vector3(), target: new THREE.Vector3() };
   const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
   
   const renderer = new THREE.WebGLRenderer({
@@ -15,6 +32,7 @@ export function createPlanet() {
   
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const radius = 1.5;
 
@@ -26,7 +44,7 @@ export function createPlanet() {
     opacity: 0.9
   });
   const baseSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-  scene.add(baseSphere);
+  earthGroup.add(baseSphere);
 
   // Add ambient light for overall illumination
   const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
@@ -53,13 +71,14 @@ export function createPlanet() {
     opacity: 0.95
   });
 
-  // Fetch precise coastlines from world-atlas TopoJSON and draw as joined polylines
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+  // Fetch land outlines only (no country borders) and draw coastline rings
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json')
     .then(r => r.json())
     .then(topology => {
-      const geojson = feature(topology, topology.objects.countries);
-      geojson.features.forEach(f => {
-        const geometry = f.geometry;
+      const land = feature(topology, topology.objects.land);
+      const geoms = (land.type === 'FeatureCollection') ? land.features.map(f => f.geometry) : [land.geometry];
+      geoms.forEach(geometry => {
+        if (!geometry) return;
         if (geometry.type === 'MultiPolygon') {
           geometry.coordinates.forEach(polygon => {
             polygon.forEach(ring => drawGeoRing(ring));
@@ -88,7 +107,7 @@ export function createPlanet() {
     }
     const geom = new THREE.BufferGeometry().setFromPoints(pts);
     const line = new THREE.Line(geom, outlineMaterial);
-    scene.add(line);
+    earthGroup.add(line);
   }
 
   // Add glowing ripple marker at Guntur, Andhra Pradesh, India (~16.3067 N, 80.4365 E)
@@ -102,7 +121,9 @@ export function createPlanet() {
   const coreMat = new THREE.MeshBasicMaterial({ color: 0xd5fa1b });
   const core = new THREE.Mesh(coreGeo, coreMat);
   core.position.copy(markerPos);
-  scene.add(core);
+  earthGroup.add(core);
+  // Click on Guntur marker to switch to house scene
+  core.userData.isGuntur = true;
 
   // Ripple rings (animated scale + fade)
   const rippleMat = new THREE.MeshBasicMaterial({
@@ -118,7 +139,7 @@ export function createPlanet() {
     ring.position.copy(markerPos);
     // Orient ring to be tangent to globe at the marker
     ring.lookAt(core.position.clone().multiplyScalar(1.05));
-    scene.add(ring);
+    earthGroup.add(ring);
     return ring;
   }
 
@@ -139,7 +160,7 @@ export function createPlanet() {
   const lfCoreMat = new THREE.MeshBasicMaterial({ color: 0xd5fa1b });
   const lfCore = new THREE.Mesh(lfCoreGeo, lfCoreMat);
   lfCore.position.copy(lfPos);
-  scene.add(lfCore);
+  earthGroup.add(lfCore);
 
   // Lake Forest ripple rings (use same effect as Guntur)
   function createRingAt(position, lookTarget, radiusScale) {
@@ -147,7 +168,7 @@ export function createPlanet() {
     const ring = new THREE.Mesh(ringGeo, rippleMat.clone());
     ring.position.copy(position);
     ring.lookAt(lookTarget);
-    scene.add(ring);
+    earthGroup.add(ring);
     return ring;
   }
   const lfRing1 = createRingAt(lfPos, lfCore.position.clone().multiplyScalar(1.05), 1);
@@ -188,7 +209,7 @@ export function createPlanet() {
     depthWrite: false
   });
   const rayLine = new THREE.Line(rayLineGeom, rayLineMat);
-  scene.add(rayLine);
+  earthGroup.add(rayLine);
   
   // Progressive reveal state (no arrow head)
   let rayProgress = 0; // 0 -> 1 head position along arc
@@ -260,15 +281,64 @@ export function createPlanet() {
 
   // Create Moon with bright glowing verde scandal color
   const moonRadius = 0.3;
-  const moonGeometry = new THREE.SphereGeometry(moonRadius, 64, 64);
+  const moonGeometry = new THREE.SphereGeometry(moonRadius, 128, 128);
   
-  // Create lunar surface material with bright glowing verde scandal color
+  // Create lunar material and emboss craters directly via bump map
+  const baseTexLoader = new THREE.TextureLoader();
+  const moonBumpMap = baseTexLoader.load('https://threejs.org/examples/textures/planets/moon_1024.jpg');
   const moonMaterial = new THREE.MeshPhongMaterial({
-    color: 0xd5fa1b, // Bright glowing verde scandal base (your theme color)
-    shininess: 100, // High shininess for metallic look
+    color: 0xd5fa1b,
+    bumpMap: moonBumpMap,
+    bumpScale: 0.06,
+    specular: 0x222222,
+    shininess: 20,
     transparent: true,
     opacity: 0.95
   });
+  
+  // Procedurally carve craters into the moon geometry (no extra meshes)
+  function carveCraters(geometry, defs) {
+    const pos = geometry.attributes.position;
+    const vertex = new THREE.Vector3();
+    const normal = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      vertex.set(pos.getX(i), pos.getY(i), pos.getZ(i));
+      normal.copy(vertex).normalize();
+      let inset = 0;
+      for (let j = 0; j < defs.length; j++) {
+        const d = defs[j];
+        const dot = THREE.MathUtils.clamp(normal.dot(d.dir), -1, 1);
+        const ang = Math.acos(dot);
+        if (ang < d.radius) {
+          const k = 0.5 * (1 + Math.cos(Math.PI * ang / d.radius));
+          inset += d.depth * k;
+        }
+      }
+      if (inset > 0) {
+        vertex.addScaledVector(normal, -inset);
+        pos.setXYZ(i, vertex.x, vertex.y, vertex.z);
+      }
+    }
+    pos.needsUpdate = true;
+    geometry.computeVertexNormals();
+  }
+
+  const craterDefs = [
+    { dir: new THREE.Vector3(0.2, 0.3, 0.8).normalize(), radius: 0.22, depth: 0.02 },
+    { dir: new THREE.Vector3(-0.4, 0.1, 0.6).normalize(), radius: 0.28, depth: 0.03 },
+    { dir: new THREE.Vector3(0.6, -0.2, 0.4).normalize(), radius: 0.18, depth: 0.014 },
+    { dir: new THREE.Vector3(-0.3, -0.4, 0.7).normalize(), radius: 0.24, depth: 0.022 },
+    { dir: new THREE.Vector3(0.1, 0.5, 0.5).normalize(), radius: 0.2, depth: 0.018 },
+    { dir: new THREE.Vector3(-0.5, 0.2, 0.3).normalize(), radius: 0.17, depth: 0.015 },
+    { dir: new THREE.Vector3(0.4, -0.3, 0.6).normalize(), radius: 0.26, depth: 0.025 },
+    { dir: new THREE.Vector3(-0.2, -0.1, 0.9).normalize(), radius: 0.16, depth: 0.012 },
+    // far side craters
+    { dir: new THREE.Vector3(-0.2, 0.3, -0.8).normalize(), radius: 0.24, depth: 0.02 },
+    { dir: new THREE.Vector3(0.5, -0.1, -0.6).normalize(), radius: 0.2, depth: 0.018 },
+    { dir: new THREE.Vector3(-0.6, 0.2, -0.4).normalize(), radius: 0.22, depth: 0.02 },
+    { dir: new THREE.Vector3(0.3, -0.5, -0.5).normalize(), radius: 0.18, depth: 0.016 },
+  ];
+  carveCraters(moonGeometry, craterDefs);
   
   const moon = new THREE.Mesh(moonGeometry, moonMaterial);
   
@@ -277,69 +347,44 @@ export function createPlanet() {
   moon.position.set(moonDistance, 0, 0);
   scene.add(moon);
 
-  // Add surface layer with bright glowing verde scandal color
-  const surfaceGeometry = new THREE.SphereGeometry(moonRadius * 0.98, 48, 48);
-  const surfaceMaterial = new THREE.MeshPhongMaterial({
-    color: 0xd5fa1b, // Bright glowing verde scandal
-    shininess: 150, // Very high shininess
-    transparent: true,
-    opacity: 0.9
+  // Drag + snap-to-orbit
+  let moonDragging = false;
+  let moonSnap = null; // { start:number, from:Vector3, to:Vector3, duration:number }
+  let moonResume = null; // { start:number, duration:number }
+  const dragControls = new DragControls([moon], camera, renderer.domElement);
+  dragControls.addEventListener('dragstart', () => {
+    controls.enabled = false;
+    moonDragging = true;
+    moonSnap = null;
+    moonAngularVelocity = 0;
   });
-  const surface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
-  moon.add(surface);
-
-  // Add accent layer with bright glowing verde scandal
-  const accentGeometry = new THREE.SphereGeometry(moonRadius * 0.99, 32, 32);
-  const accentMaterial = new THREE.MeshPhongMaterial({
-    color: 0xd5fa1b, // Bright glowing verde scandal accent
-    shininess: 200, // Extremely shiny
-    transparent: true,
-    opacity: 0.8
+  dragControls.addEventListener('drag', (e) => {
+    const p = e.object.position;
+    const d = p.length();
+    const minD = moonRadius * 2.2;
+    const maxD = moonDistance * 6;
+    if (d < minD || d > maxD) {
+      const nx = p.x / (d || 1);
+      const ny = p.y / (d || 1);
+      const nz = p.z / (d || 1);
+      const clampR = Math.max(minD, Math.min(maxD, d));
+      p.set(nx * clampR, ny * clampR, nz * clampR);
+    }
   });
-  const accent = new THREE.Mesh(accentGeometry, accentMaterial);
-  moon.add(accent);
-
-  // Add realistic lunar craters
-  const craterPositions = [
-    { x: 0.2, y: 0.3, z: 0.8, radius: 0.08, depth: 0.02 },
-    { x: -0.4, y: 0.1, z: 0.6, radius: 0.12, depth: 0.03 },
-    { x: 0.6, y: -0.2, z: 0.4, radius: 0.06, depth: 0.015 },
-    { x: -0.3, y: -0.4, z: 0.7, radius: 0.1, depth: 0.025 },
-    { x: 0.1, y: 0.5, z: 0.5, radius: 0.09, depth: 0.02 },
-    { x: -0.5, y: 0.2, z: 0.3, radius: 0.07, depth: 0.018 },
-    { x: 0.4, y: -0.3, z: 0.6, radius: 0.11, depth: 0.028 },
-    { x: -0.2, y: -0.1, z: 0.9, radius: 0.05, depth: 0.012 },
-    { x: 0.3, y: 0.4, z: 0.4, radius: 0.08, depth: 0.02 },
-    { x: -0.6, y: -0.2, z: 0.5, radius: 0.13, depth: 0.032 },
-    { x: 0.7, y: 0.1, z: 0.3, radius: 0.04, depth: 0.01 },
-    { x: -0.1, y: -0.6, z: 0.4, radius: 0.09, depth: 0.022 },
-    { x: 0.5, y: 0.6, z: 0.2, radius: 0.06, depth: 0.015 },
-    { x: -0.7, y: -0.3, z: 0.3, radius: 0.08, depth: 0.02 },
-    { x: 0.2, y: -0.5, z: 0.6, radius: 0.11, depth: 0.027 }
-  ];
-
-  craterPositions.forEach(crater => {
-    const craterGeometry = new THREE.SphereGeometry(crater.radius, 16, 16);
-    const craterMaterial = new THREE.MeshPhongMaterial({
-      color: 0x7a9a2a, // Medium bright verde scandal for subtle crater shadows
-      shininess: 30,
-      transparent: true,
-      opacity: 0.4
-    });
-    const craterMesh = new THREE.Mesh(craterGeometry, craterMaterial);
-    
-    // Position crater on moon surface
-    craterMesh.position.set(
-      crater.x * moonRadius * 0.8,
-      crater.y * moonRadius * 0.8,
-      crater.z * moonRadius * 0.8
-    );
-    
-    // Scale to create depth effect
-    craterMesh.scale.set(1, 1, crater.depth);
-    
-    moon.add(craterMesh);
+  dragControls.addEventListener('dragend', () => {
+    controls.enabled = true;
+    moonDragging = false;
+    // snap target projected to the orbit ring at y=0 for stable start
+    const target = new THREE.Vector3(moon.position.x, 0, moon.position.z).normalize().multiplyScalar(moonDistance);
+    moonSnap = { start: performance.now(), from: moon.position.clone(), to: target, duration: 900 };
+    moonResume = null; // will start after snap finishes
   });
+
+  // Removed masking surface sphere; using bump directly on base moon
+
+  // Removed accent layer to avoid hiding bump details
+
+  // Lightweight option: rely on bump map instead of extra crater meshes
 
   // Add bright glowing lighting for maximum verde scandal effect
   const moonLight = new THREE.PointLight(0xffffff, 2.0, 15);
@@ -377,6 +422,229 @@ export function createPlanet() {
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
   controls.rotateSpeed = 0.5;
+  
+  // Simple verde scandal house (inspired by sunposition's minimal scene building)
+  function buildHouse(group) {
+    // Platform (smaller to avoid overlap with planet elements)
+    const platform = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 0.18, 48), new THREE.MeshPhongMaterial({ color: 0x0a0a0a }));
+    platform.position.y = -0.09;
+    group.add(platform);
+
+    // Option A: Load a GLTF modern house similar to the reference demo
+    const draco = new DRACOLoader();
+    draco.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+    const gltf = new GLTFLoader();
+    gltf.setDRACOLoader(draco);
+    gltf.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/AVIFTest/forest_house.glb', (res)=>{
+      const model = res.scene;
+      model.scale.set(0.22, 0.22, 0.22); // slightly bigger to blend with modern house/trees
+      // move GLTF house to former hut spot
+      model.position.set(-1.0, 0, 0.9);
+      // reverse facing
+      model.rotation.y = Math.PI;
+      // theme walls verde scandal, roof black, keep GLTF trees/leaves natural
+      const modelBox = new THREE.Box3().setFromObject(model);
+      const totalH = (modelBox.max.y - modelBox.min.y) || 1;
+      const roofBandY = modelBox.max.y - 0.2 * totalH; // top 20%
+      const isLeaves = (n) => /leaf|leaves|foliage|pine|needles/i.test(n || '');
+      const isTrunk  = (n) => /trunk|bark|wood|stem/i.test(n || '');
+      const roofBrown = new THREE.Color(0x6b4f2a);
+      model.traverse(o=>{
+        if (!o.isMesh || !o.material) return;
+        const mat = o.material;
+        const hasColor = !!mat.color;
+        const bb = new THREE.Box3().setFromObject(o);
+        const dx = bb.max.x - bb.min.x;
+        const dy = bb.max.y - bb.min.y;
+        const dz = bb.max.z - bb.min.z;
+        const flat = dy < Math.max(dx, dz) * 0.25; // thin compared to span
+        const nearTop = bb.max.y >= roofBandY;
+        if (hasColor) {
+          if (isLeaves(o.name)) {
+            mat.color = new THREE.Color(0xa9ff1b); // our modern leaves green
+          } else if (isTrunk(o.name)) {
+            mat.color = new THREE.Color(0x5a3b27); // trunk brown
+          } else if (nearTop && flat) {
+            mat.color = roofBrown; // roof brown
+          } else {
+            mat.color = new THREE.Color(0xd5fa1b); // theme walls/other
+          }
+        }
+      });
+      group.add(model);
+    }, undefined, ()=>{/* fallback to procedural if needed */});
+
+    // Procedural modern house fallback disabled to prefer exact GLTF model
+    const facadeMat = new THREE.MeshPhysicalMaterial({ color: 0xd5fa1b, metalness: 0.25, roughness: 0.5, clearcoat: 0.35 });
+    const darkMat = new THREE.MeshPhysicalMaterial({ color: 0x101010, metalness: 0.6, roughness: 0.4 });
+    const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x8fd80a, transmission: 0.85, thickness: 0.08, roughness: 0.12, transparent: true, opacity: 0.9 });
+
+    // Build modern house elements into a subgroup so we can shift slightly right
+    const modern = new THREE.Group();
+    const blockA = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.65, 0.8), facadeMat);
+    blockA.position.set(0, 0.325, 0);
+    const blockB = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.45, 0.65), darkMat);
+    blockB.position.set(-0.6, 0.7, -0.05);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.05, 0.95), darkMat);
+    roof.position.set(0, 0.7, 0);
+    const windowWall = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.45, 0.02), glassMat);
+    windowWall.position.set(0.08, 0.5, 0.41);
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.45, 0.03), darkMat);
+    door.position.set(-0.5, 0.28, 0.41);
+    modern.add(blockA, blockB, roof, windowWall, door);
+    modern.position.set(0.7, 0, 0.2); // a little to the right
+
+    // Remove tank/car per request; add modern subgroup
+    group.add(modern);
+
+    // Fewer trees around platform (leave space for pool)
+    const trunkMat = new THREE.MeshPhongMaterial({ color: 0x5a3b27 });
+    const leafMat = new THREE.MeshPhongMaterial({ color: 0xa9ff1b });
+    function addTree(x, z, s=1) {
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.04*s, 0.05*s, 0.5*s, 8), trunkMat);
+      trunk.position.set(x, 0.25*s, z);
+      const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.28*s, 0), leafMat);
+      crown.position.set(x, 0.65*s, z);
+      group.add(trunk, crown);
+    }
+    const ring = 1.6;
+    const treePositions = [
+      [Math.cos(0)*ring, Math.sin(0)*ring],
+      [Math.cos(1.7)*ring, Math.sin(1.7)*ring], // moved a bit more away from GLTF house
+      [Math.cos(4.0)*ring, Math.sin(4.0)*ring]
+    ];
+    treePositions.forEach(([tx,tz],i)=>addTree(tx, tz, 0.9 + (i%2)*0.15));
+
+    // Garden shrubs around platform
+    const shrubMat = new THREE.MeshPhongMaterial({ color: 0xa9ff1b });
+    function addShrub(x, z, s = 1) {
+      const shrub = new THREE.Mesh(new THREE.IcosahedronGeometry(0.12 * s, 0), shrubMat);
+      shrub.position.set(x, 0.12 * s, z);
+      group.add(shrub);
+    }
+    // Remove platform shrubs per request
+
+    // Grass patch around modern house base
+    const grassMat = new THREE.MeshPhongMaterial({ color: 0xd5fa1b });
+    const grass = new THREE.Mesh(new THREE.CircleGeometry(0.9, 64), grassMat);
+    grass.rotation.x = -Math.PI / 2;
+    grass.position.set(modern.position.x, 0.001, modern.position.z);
+    group.add(grass);
+
+    // Add sparse grass tufts on the patch (low-poly, verde theme)
+    const tuftMat = new THREE.MeshPhongMaterial({ color: 0xd5fa1b });
+    function addGrassTuft(x, z, scale = 1) {
+      const tuft = new THREE.Group();
+      const h = 0.08 * scale;
+      const r = 0.01 * scale;
+      for (let i = 0; i < 3; i++) {
+        const blade = new THREE.Mesh(new THREE.ConeGeometry(r, h, 6), tuftMat);
+        blade.position.y = h / 2;
+        blade.rotation.z = (-0.6 + Math.random() * 1.2) * 0.6; // lean a bit
+        blade.rotation.y = (i / 3) * Math.PI * 2;
+        tuft.add(blade);
+      }
+      tuft.position.set(x, 0.0, z);
+      group.add(tuft);
+    }
+    // Distribute tufts randomly within the grass circle, avoiding house footprint
+    const patchR = 0.85;
+    const houseExR = 0.28, houseExZ = 0.2; // ellipse exclusion near door/walls
+    for (let i = 0; i < 36; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * patchR;
+      const gx = modern.position.x + Math.cos(ang) * r;
+      const gz = modern.position.z + Math.sin(ang) * r;
+      const ex = (gx - modern.position.x) / houseExR;
+      const ez = (gz - modern.position.z) / houseExZ;
+      if ((ex * ex + ez * ez) < 1.0) continue; // skip inside footprint ellipse
+      addGrassTuft(gx, gz, 0.8 + Math.random() * 0.6);
+    }
+
+    // Decorative poles with small lamps
+    const poleMat = new THREE.MeshPhongMaterial({ color: 0x2a2a2a });
+    const lampMat = new THREE.MeshPhongMaterial({ color: 0xd5fa1b, emissive: 0x5a8f0a, emissiveIntensity: 0.8 });
+    function addPole(x, z, h = 0.6) {
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.018, h, 12), poleMat);
+      mast.position.set(x, h / 2, z);
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 12), lampMat);
+      lamp.position.set(x, h + 0.03, z);
+      const light = new THREE.PointLight(0xd5fa1b, 0.55, 2.2);
+      light.position.set(x, h + 0.05, z);
+      group.add(mast, lamp, light);
+    }
+    addPole(0.3, 0.9, 0.62);   // near modern house side
+    addPole(-0.2, -1.1, 0.58); // opposite edge
+    addPole(1.1, -0.4, 0.64);  // another corner
+
+    // Fence around the platform with a gate opening
+    const fencePostMat = new THREE.MeshPhongMaterial({ color: 0x303030 });
+    const fenceRailMat = new THREE.MeshPhongMaterial({ color: 0x202020 });
+    const fenceRadius = 2.55; // slightly outside platform
+    const posts = 18;
+    const gateSpan = Math.PI / 7; // opening angle for gate
+    const gateCenter = -Math.PI / 2; // gate facing toward camera initially
+    const postH = 0.22;
+    const postGeo = new THREE.CylinderGeometry(0.02, 0.02, postH, 10);
+    for (let i = 0; i < posts; i++) {
+      const ang = (i / posts) * Math.PI * 2;
+      const delta = Math.atan2(Math.sin(ang - gateCenter), Math.cos(ang - gateCenter));
+      if (Math.abs(delta) < gateSpan * 0.5) continue; // skip posts in gate span
+      const x = Math.cos(ang) * fenceRadius;
+      const z = Math.sin(ang) * fenceRadius;
+      const post = new THREE.Mesh(postGeo, fencePostMat);
+      post.position.set(x, postH / 2, z);
+      group.add(post);
+      // No rails/chains per request; keep posts as border only
+    }
+
+    // Remove hut per request
+
+    // Birds: custom parrot-like silhouette (body + thin wings + tail), no GLTF
+    const verdeMatFlat = new THREE.MeshBasicMaterial({ color: 0xd5fa1b, side: THREE.DoubleSide });
+    const verdeMatLit = new THREE.MeshPhongMaterial({ color: 0xd5fa1b, shininess: 30 });
+    function tri(ax,ay,az,bx,by,bz,cx,cy,cz){
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([ax,ay,az,bx,by,bz,cx,cy,cz]),3));
+      g.computeVertexNormals();
+      return new THREE.Mesh(g, verdeMatFlat);
+    }
+    function createVBird() {
+      const bird = new THREE.Group();
+      const wingSpan = 0.1;
+      const wingHeight = 0.03;
+      const wingGeometry = new THREE.BufferGeometry();
+      const positions = new Float32Array([
+        0, 0, 0,
+        wingSpan, 0, 0,
+        wingSpan / 2, wingHeight, 0,
+      ]);
+      wingGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const wingL = new THREE.Mesh(wingGeometry, verdeMatFlat);
+      const wingR = new THREE.Mesh(wingGeometry.clone(), verdeMatFlat);
+      wingR.scale.x = -1;
+      bird.add(wingL, wingR);
+      // Make birds a bit smaller
+      bird.scale.set(0.8, 0.8, 0.8);
+      bird.userData = {
+        r: 1.4 + Math.random()*0.6,
+        h: 0.75 + Math.random()*0.4,
+        sp: 0.9 + Math.random()*0.6,
+        ph: Math.random()*Math.PI*2,
+        flap: 8 + Math.random()*4,
+        hiddenStart: 0,
+        wingL,
+        wingR
+      };
+      group.add(bird);
+      birds.push(bird);
+    }
+    const numBirds = 14;
+    for (let i = 0; i < numBirds; i++) createVBird();
+
+    group.position.set(0, 0, 0);
+  }
+  buildHouse(houseGroup);
 
   // Camera motion tracking for particle wind coupling
   const prevCamPos = new THREE.Vector3().copy(camera.position);
@@ -385,6 +653,8 @@ export function createPlanet() {
 
   let moonAngle = 0;
   const moonSpeed = 0.005; // Speed of moon orbit
+  let moonAngularVelocity = moonSpeed;
+  const moonAngularAcceleration = moonSpeed / 30;
 
   // --- SANDBAND PARTICLE FIELD (orb-like, deterministic) ---
   function mulberry32(a) {
@@ -475,7 +745,7 @@ export function createPlanet() {
       bandGeos[s] = geo;
       const mat = new THREE.PointsMaterial({
         color: 0xd5fa1b,
-        size: 0.0045,
+        size: 0.0055,
         transparent: true,
         opacity: 0.9,
         depthWrite: false,
@@ -560,13 +830,66 @@ export function createPlanet() {
 
     // No arrow head; just the animated arc line
 
-    // Animate moon orbit
-    moonAngle += moonSpeed;
+    // Rotate Earth group slowly: one revolution per real day
+    const secondsPerDay = 86400;
+    const deltaSeconds = delta / 1000;
+    earthGroup.rotation.y += (2 * Math.PI) * (deltaSeconds / secondsPerDay);
+
+    // Moon orbit or drag/snap
+    if (!moonDragging && !moonSnap) {
+      // ease back into orbital speed if coming out of a snap
+      let speedScale = 1;
+      if (moonResume) {
+        const tt = Math.min(1, (performance.now() - moonResume.start) / moonResume.duration);
+        speedScale = 1 - Math.pow(1 - tt, 3);
+        if (tt >= 1) moonResume = null;
+      }
+      moonAngle += moonSpeed * speedScale;
     moon.position.x = Math.cos(moonAngle) * moonDistance;
     moon.position.z = Math.sin(moonAngle) * moonDistance;
+    }
+    if (moonSnap) {
+      const tSnap = Math.min(1, (performance.now() - moonSnap.start) / moonSnap.duration);
+      const ease = 1 - Math.pow(1 - tSnap, 3);
+      moon.position.lerpVectors(moonSnap.from, moonSnap.to, ease);
+      // keep orbit phase aligned with snapped position to prevent jump
+      moonAngle = Math.atan2(moon.position.z, moon.position.x);
+      if (tSnap >= 1) {
+        moonSnap = null;
+        moonResume = { start: performance.now(), duration: 450 };
+      }
+    }
     
     // Rotate moon slightly on its own axis
     moon.rotation.y += 0.002;
+
+    // Animate birds around the house
+    if (houseGroup.visible && birds.length) {
+      const tNow = performance.now() * 0.001;
+      // advance GLTF bird mixers for wing flaps
+      for (let i = 0; i < birds.length; i++) {
+        const b = birds[i];
+        const d = b.userData || {};
+        const a = tNow * (d.sp || 1.0) + (d.ph || 0);
+        const r = d.r || 1.4;
+        const h = d.h || 0.8;
+        // show after full orbit, then hide for ~2s
+        const cycle = 2.0;
+        const phase = (a % (Math.PI*2)) / (Math.PI*2);
+        if (phase < 0.02 && (!d.hiddenStart || tNow - d.hiddenStart > cycle)) d.hiddenStart = tNow;
+        b.visible = !(tNow - (d.hiddenStart || 0) < cycle);
+        b.position.set(Math.cos(a) * r, h + Math.sin(a*2)*0.08, Math.sin(a) * r);
+        b.rotation.y = -(a + Math.PI/2);
+        // flap wings and add slight roll/tilt
+        const flap = Math.sin(tNow * (d.flap || 8));
+        if (d.wingL && d.wingR) {
+          d.wingL.rotation.z = 0.5 + flap * 0.8;
+          d.wingR.rotation.z = -0.5 - flap * 0.8;
+        }
+        b.rotation.z = flap * 0.14;
+        b.rotation.x = -0.12;
+      }
+    }
     
     // Sand flow: drift along tangent with gentle turbulence + camera-coupled wind
     const nowMs = Date.now();
@@ -657,7 +980,7 @@ export function createPlanet() {
         bandPoints[s].visible = true;
       }
     }
-
+    
     controls.update();
     renderer.render(scene, camera);
   }
@@ -669,6 +992,41 @@ export function createPlanet() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
+
+  // Raycaster to detect clicks on the Guntur marker and toggle to house scene
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  renderer.domElement.addEventListener('click', (ev) => {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects([core], true);
+    if (intersects.length && intersects[0].object.userData.isGuntur) {
+      // Toggle to house view
+      mode = 'house';
+      // save camera/target
+      savedCam.position.copy(camera.position);
+      savedCam.target = controls.target.clone();
+      earthGroup.visible = false;
+      houseGroup.visible = true;
+      controls.target.set(0, 0.5, 0);
+      camera.position.set(2.8, 1.6, 3.2);
+      controls.update();
+    }
+  });
+
+  // ESC to exit house and return to planet
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mode === 'house') {
+      mode = 'planet';
+      houseGroup.visible = false;
+      earthGroup.visible = true;
+      controls.target.copy(savedCam.target || new THREE.Vector3());
+      camera.position.copy(savedCam.position || new THREE.Vector3(0,0,4.5));
+      controls.update();
+    }
+  });
 
   // Cross-window orb sync (camera + target + particle seed/time)
   const orb = createOrbSync({
@@ -777,6 +1135,7 @@ export function createPlanet() {
         const val = parseInt(localStorage.getItem('planet_tab_count_v1') || '1', 10) || 1;
         localStorage.setItem('planet_tab_count_v1', String(Math.max(0, val - 1)));
       } catch (_) {}
+      dragControls.dispose();
     }
   };
 }
