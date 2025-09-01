@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { feature } from 'topojson-client';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { createOrbSync } from './orbSync.js';
 
 export function createPlanet() {
   const scene = new THREE.Scene();
@@ -377,8 +378,116 @@ export function createPlanet() {
   controls.dampingFactor = 0.05;
   controls.rotateSpeed = 0.5;
 
+  // Camera motion tracking for particle wind coupling
+  const prevCamPos = new THREE.Vector3().copy(camera.position);
+  const prevCamQuat = camera.quaternion.clone();
+  const windVec = new THREE.Vector3();
+
   let moonAngle = 0;
   const moonSpeed = 0.005; // Speed of moon orbit
+
+  // --- SANDBAND PARTICLE FIELD (orb-like, deterministic) ---
+  function mulberry32(a) {
+    return function() {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  let particleSeed = Math.floor(Math.random() * 1e9) >>> 0;
+  let simStartMs = Date.now();
+  const particleRadius = radius * 2.0;
+  let particleCount = 6500; // denser halo around entire globe
+  // Band shards per active window (so particles "transfer" between tabs)
+  let bandPoints = [];
+  let bandGeos = [];
+  let bandPos = [];
+  let bandDir = [];
+  let bandPhase = [];
+  let bandSpeed = [];
+  let bandVel = [];
+  let rng = mulberry32(particleSeed);
+
+  function buildBandShards(shards) {
+    // cleanup old
+    bandPoints.forEach(p => scene.remove(p));
+    bandPoints = []; bandGeos = []; bandPos = []; bandDir = []; bandPhase = []; bandSpeed = [];
+    const counts = new Array(shards).fill(0).map(() => 0);
+    // two-pass: first decide counts, then allocate
+    const tmpAssign = new Int32Array(particleCount);
+    for (let i = 0; i < particleCount; i++) {
+      tmpAssign[i] = i % shards;
+      counts[tmpAssign[i]]++;
+    }
+    for (let s = 0; s < shards; s++) {
+      bandPos[s] = new Float32Array(counts[s] * 3);
+      bandDir[s] = new Float32Array(counts[s] * 3);
+      bandPhase[s] = new Float32Array(counts[s]);
+      bandSpeed[s] = new Float32Array(counts[s]);
+      bandVel[s] = new Float32Array(counts[s] * 3);
+    }
+    rng = mulberry32(particleSeed);
+    const writeIdx = new Array(shards).fill(0);
+    for (let i = 0; i < particleCount; i++) {
+      const shard = tmpAssign[i];
+      const wi = writeIdx[shard]++;
+      const u = rng();
+      const v = rng();
+      const theta = 2 * Math.PI * u;
+      const phi = Math.acos(2 * v - 1);
+      const band = 0.22; // thicker band for full wrap
+      const radial = particleRadius + (rng() * 2 - 1) * (radius * band);
+      const x = Math.sin(phi) * Math.cos(theta);
+      const y = Math.cos(phi);
+      const z = Math.sin(phi) * Math.sin(theta);
+      bandPos[shard][wi * 3 + 0] = x * radial;
+      bandPos[shard][wi * 3 + 1] = y * radial;
+      bandPos[shard][wi * 3 + 2] = z * radial;
+      // build a random tangent on the sphere to avoid equator bias
+      const nx = x, ny = y, nz = z;
+      // pick a reference not parallel to normal
+      let rx = 0, ry = 1, rz = 0;
+      if (Math.abs(ny) > 0.9) { rx = 1; ry = 0; rz = 0; }
+      // t1 = normalize(cross(n, ref))
+      let t1x = ny * rz - nz * ry;
+      let t1y = nz * rx - nx * rz;
+      let t1z = nx * ry - ny * rx;
+      const t1len = Math.hypot(t1x, t1y, t1z) || 1; t1x/=t1len; t1y/=t1len; t1z/=t1len;
+      // t2 = normalize(cross(n, t1))
+      let t2x = ny * t1z - nz * t1y;
+      let t2y = nz * t1x - nx * t1z;
+      let t2z = nx * t1y - ny * t1x;
+      const t2len = Math.hypot(t2x, t2y, t2z) || 1; t2x/=t2len; t2y/=t2len; t2z/=t2len;
+      const ang = rng() * Math.PI * 2;
+      let tx = t1x * Math.cos(ang) + t2x * Math.sin(ang);
+      let ty = t1y * Math.cos(ang) + t2y * Math.sin(ang);
+      let tz = t1z * Math.cos(ang) + t2z * Math.sin(ang);
+      bandDir[shard][wi * 3 + 0] = tx;
+      bandDir[shard][wi * 3 + 1] = ty;
+      bandDir[shard][wi * 3 + 2] = tz;
+      bandPhase[shard][wi] = rng() * Math.PI * 2;
+      bandSpeed[shard][wi] = 0.15 + rng() * 0.55;
+    }
+    for (let s = 0; s < shards; s++) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(bandPos[s], 3));
+      bandGeos[s] = geo;
+      const mat = new THREE.PointsMaterial({
+        color: 0xd5fa1b,
+        size: 0.0045,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true,
+      });
+      const pts = new THREE.Points(geo, mat);
+      pts.visible = true; // we'll toggle by ownership below
+      scene.add(pts);
+      bandPoints[s] = pts;
+    }
+  }
 
   function animate() {
     requestAnimationFrame(animate);
@@ -459,6 +568,96 @@ export function createPlanet() {
     // Rotate moon slightly on its own axis
     moon.rotation.y += 0.002;
     
+    // Sand flow: drift along tangent with gentle turbulence + camera-coupled wind
+    const nowMs = Date.now();
+    const simT = (nowMs - simStartMs) * 0.0012; // global time so tabs match
+    // camera-based wind vector (world space delta)
+    windVec.copy(camera.position).sub(prevCamPos);
+    const camMoveLen = windVec.length();
+    prevCamPos.copy(camera.position);
+    // time step for physics
+    if (!animate._physPrev) animate._physPrev = performance.now();
+    const nowPhys = performance.now();
+    const dt = Math.min(0.05, (nowPhys - animate._physPrev) / 1000);
+    animate._physPrev = nowPhys;
+    for (let s = 0; s < bandPoints.length; s++) {
+      const pos = bandGeos[s].attributes.position.array;
+      const dir = bandDir[s];
+      const spd = bandSpeed[s];
+      const ph = bandPhase[s];
+      const vel = bandVel[s];
+      for (let i = 0; i < spd.length; i++) {
+        const idx = i * 3;
+        let x = pos[idx + 0];
+        let y = pos[idx + 1];
+        let z = pos[idx + 2];
+        const tx = dir[idx + 0];
+        const ty = dir[idx + 1];
+        const tz = dir[idx + 2];
+        const sp = spd[i];
+        const phase = ph[i];
+        // base drift (tangent)
+        const baseDrift = 0.45 * dt; // scaled by dt
+        vel[idx + 0] += tx * sp * baseDrift;
+        vel[idx + 1] += ty * sp * baseDrift;
+        vel[idx + 2] += tz * sp * baseDrift;
+        // wind coupling: project camera-motion onto tangent plane
+        const r = Math.hypot(x, y, z) || particleRadius;
+        const nx = x / r, ny = y / r, nz = z / r;
+        const wx = windVec.x, wy = windVec.y, wz = windVec.z;
+        const wDotN = wx * nx + wy * ny + wz * nz;
+        const wxT = wx - wDotN * nx;
+        const wyT = wy - wDotN * ny;
+        const wzT = wz - wDotN * nz;
+        const windGain = Math.min(1.0, 2.5 * camMoveLen);
+        vel[idx + 0] += wxT * windGain * 0.12;
+        vel[idx + 1] += wyT * windGain * 0.12;
+        vel[idx + 2] += wzT * windGain * 0.12;
+        const breathe = Math.sin(simT * 1.7 + phase) * (radius * 0.02);
+        // radial transfer offset tweaked toward shard's target
+        const ro = bandPoints[s].userData;
+        ro.radialOffset += ((ro.radialTarget || 0) - (ro.radialOffset || 0)) * 0.05;
+        const targetR = particleRadius + breathe + (ro.radialOffset || 0);
+        const springK = 6.0; // radial spring strength
+        const radialErr = (targetR - r);
+        vel[idx + 0] += nx * springK * radialErr * dt;
+        vel[idx + 1] += ny * springK * radialErr * dt;
+        vel[idx + 2] += nz * springK * radialErr * dt;
+        // damping
+        const damp = Math.pow(0.92, dt * 60);
+        vel[idx + 0] *= damp;
+        vel[idx + 1] *= damp;
+        vel[idx + 2] *= damp;
+        // integrate
+        x += vel[idx + 0];
+        y += vel[idx + 1];
+        z += vel[idx + 2];
+        // project back to target sphere radius to prevent equator accumulation
+        const r2 = Math.hypot(x, y, z) || targetR;
+        if (r2 > 0) {
+          const inv = targetR / r2;
+          pos[idx + 0] = x * inv;
+          pos[idx + 1] = y * inv;
+          pos[idx + 2] = z * inv;
+        } else {
+          pos[idx + 0] = nx * targetR;
+          pos[idx + 1] = ny * targetR;
+          pos[idx + 2] = nz * targetR;
+        }
+      }
+      bandGeos[s].attributes.position.needsUpdate = true;
+      bandPoints[s].rotation.y += 0.0009;
+      // fade toward target opacity for transfer visual
+      const mat = bandPoints[s].material;
+      const target = typeof bandPoints[s].userData.targetOpacity === 'number' ? bandPoints[s].userData.targetOpacity : 0.9;
+      mat.opacity += (target - mat.opacity) * 0.08; // smooth approach
+      if (mat.opacity < 0.02 && target === 0.0) {
+        bandPoints[s].visible = false; // fully hidden when faded out
+      } else {
+        bandPoints[s].visible = true;
+      }
+    }
+
     controls.update();
     renderer.render(scene, camera);
   }
@@ -470,4 +669,114 @@ export function createPlanet() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
+
+  // Cross-window orb sync (camera + target + particle seed/time)
+  const orb = createOrbSync({
+    getState: () => ({
+      target: controls.target.toArray(),
+      position: camera.position.toArray(),
+      zoom: camera.zoom,
+      pSeed: particleSeed,
+      pStart: simStartMs,
+      pCount: particleCount,
+      shards: 2
+    }),
+    applyState: (s) => {
+      if (!s) return;
+      if (Array.isArray(s.target)) controls.target.fromArray(s.target);
+      if (Array.isArray(s.position)) camera.position.fromArray(s.position);
+      if (typeof s.zoom === 'number') camera.zoom = s.zoom;
+      if (typeof s.pSeed === 'number' && s.pSeed !== particleSeed) {
+        particleSeed = s.pSeed >>> 0;
+        rebuildParticles();
+      }
+      if (typeof s.pStart === 'number') {
+        simStartMs = s.pStart;
+      }
+      if (typeof s.pCount === 'number' && s.pCount !== particleCount) {
+        particleCount = Math.max(1000, Math.min(12000, s.pCount | 0));
+        buildBandShards(currentShardTotal);
+      }
+      camera.updateProjectionMatrix();
+      controls.update();
+    },
+    throttleMs: 80,
+  });
+  orb.start();
+  // Leadership: only the focused tab broadcasts continuously
+  let isLeader = document.hasFocus();
+  let currentShardTotal = 2;
+  const onFocus = () => { isLeader = true; orb.broadcast(true); };
+  const onBlur = () => { isLeader = false; };
+  window.addEventListener('focus', onFocus);
+  window.addEventListener('blur', onBlur);
+  // Force an initial broadcast so the other tab latches on
+  orb.broadcast(true);
+  const send = () => { if (isLeader) orb.broadcast(false); };
+  controls.addEventListener('change', send);
+  const heartbeat = setInterval(() => { if (isLeader) orb.broadcast(false); }, 600);
+
+  // Split particle band across tabs so particles "transfer"
+  // Track active window ids list to assign a stable shard index
+  const LIST_KEY = 'planet_window_list_v1';
+  const myId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  let windowList = [];
+  let myIndex = 0;
+  function readList() {
+    try { return JSON.parse(localStorage.getItem(LIST_KEY) || '[]') || []; } catch { return []; }
+  }
+  function writeList(list) {
+    try { localStorage.setItem(LIST_KEY, JSON.stringify(list)); } catch {}
+  }
+  function registerWindow() {
+    const list = readList().filter(Boolean);
+    if (!list.includes(myId)) list.push(myId);
+    windowList = list;
+    writeList(windowList);
+  }
+  function unregisterWindow() {
+    const list = readList().filter(id => id && id !== myId);
+    writeList(list);
+  }
+  function rebalance() {
+    windowList = readList().filter(Boolean);
+    if (!windowList.includes(myId)) registerWindow();
+    myIndex = Math.max(0, windowList.indexOf(myId));
+    const shards = Math.max(1, windowList.length);
+    currentShardTotal = shards;
+    buildBandShards(shards);
+    // Cross-fade shard visibility so it looks like particles transfer
+    for (let s = 0; s < bandPoints.length; s++) {
+      const isMine = (s === myIndex);
+      const mat = bandPoints[s].material;
+      mat.opacity = isMine ? 0.0 : mat.opacity; // start fade-in for own shard
+      bandPoints[s].visible = true; // keep visible during fade
+      bandPoints[s].userData.targetOpacity = isMine ? 0.9 : 0.0;
+      // set radial travel targets for visible transfer (outward for losing, inward for gaining)
+      if (typeof bandPoints[s].userData.radialOffset !== 'number') {
+        bandPoints[s].userData.radialOffset = isMine ? (radius * 0.6) : 0;
+      }
+      bandPoints[s].userData.radialTarget = isMine ? 0 : (radius * 0.6);
+    }
+  }
+  window.addEventListener('storage', (e) => {
+    if (e.key === LIST_KEY) rebalance();
+  });
+  registerWindow();
+  buildBandShards(readList().length || 1);
+  rebalance();
+
+  return {
+    dispose: () => {
+      controls.removeEventListener('change', send);
+      clearInterval(heartbeat);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('blur', onBlur);
+      // Decrement tab count and cleanup
+      try {
+        const val = parseInt(localStorage.getItem('planet_tab_count_v1') || '1', 10) || 1;
+        localStorage.setItem('planet_tab_count_v1', String(Math.max(0, val - 1)));
+      } catch (_) {}
+    }
+  };
 }

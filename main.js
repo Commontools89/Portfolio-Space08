@@ -28,8 +28,13 @@ const sketch = (p) => {
     hyperjumpAnimation.windowResized();
   };
 
-  window.startTransition = (callback) => {
-    hyperjumpAnimation.startTransition(() => {
+  window.startTransition = (options, callback) => {
+    // Back-compat: allow startTransition(callback)
+    if (typeof options === 'function') {
+      callback = options;
+      options = {};
+    }
+    hyperjumpAnimation.startTransition(options || {}, () => {
       document.getElementById('portfolio').classList.add('visible');
       if (callback) callback();
     });
@@ -54,12 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load initial content
   contentDiv.innerHTML = About();
 
+  // No about arrow wiring; removed per latest spec
+
   if (landingPage && landingPageText) {
     landingPage.addEventListener('click', () => {
       landingPageText.classList.add('animate-out');
       landingPage.style.background = 'transparent';
       
-      window.startTransition(() => {
+      // Fast transition only for the first landing -> about reveal
+      window.startTransition({ mode: 'fast' }, () => {
         landingPage.classList.add('hidden');
         portfolio.classList.remove('hidden');
       });
@@ -84,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // No game page; focusing on planet and other sections
       
-      window.startTransition(() => {
+      window.startTransition({ mode: 'classic' }, () => {
         // Clear previous content
         contentDiv.innerHTML = '';
         
@@ -107,6 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
+
+  // Removed page-travel arrow logic
 
   
 
@@ -182,6 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
           chatMessages.insertAdjacentHTML('beforeend', responseHTML);
           chatMessages.scrollTop = chatMessages.scrollHeight;
           
+          // Launch the ship animation
+          const shipBtn = form.querySelector('.send-ship');
+          if (shipBtn) {
+            shipBtn.classList.add('launching');
+            setTimeout(() => {
+              shipBtn.classList.remove('launching');
+            }, 800);
+          }
+
           // Clear form
           form.reset();
 
