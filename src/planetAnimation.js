@@ -13,11 +13,55 @@ export function createPlanet() {
   // Group for all Earth meshes so we can rotate the planet as a whole
   const earthGroup = new THREE.Group();
   scene.add(earthGroup);
-  // House group (hidden initially)
+  // House group (hidden initially) with two plots: Guntur (GLTF) and Lake Forest (modern)
   const houseGroup = new THREE.Group();
   houseGroup.visible = false;
   scene.add(houseGroup);
-  let birds = [];
+  const gunturPlot = new THREE.Group();
+  gunturPlot.visible = false;
+  const lakePlot = new THREE.Group();
+  lakePlot.visible = false;
+  houseGroup.add(gunturPlot);
+  houseGroup.add(lakePlot);
+  let birdsLake = [];
+  let birdsGuntur = [];
+  let activePlot = null; // 'guntur' | 'lake' | null
+
+  function updatePlotsVisibility() {
+    gunturPlot.visible = (activePlot === 'guntur');
+    lakePlot.visible = (activePlot === 'lake');
+  }
+
+  function clearGroup(group) {
+    const meshes = [];
+    group.traverse(o => { if (o.isMesh) meshes.push(o); });
+    meshes.forEach(m => {
+      if (m.geometry) { try { m.geometry.dispose(); } catch(_){} }
+      const mat = m.material;
+      if (Array.isArray(mat)) mat.forEach(mm => { try { mm.dispose(); } catch(_){} });
+      else if (mat) { try { mat.dispose(); } catch(_){} }
+    });
+    while (group.children.length) group.remove(group.children[0]);
+  }
+
+  function setActivePlot(name) {
+    activePlot = name;
+    if (name === 'guntur') {
+      gunturPlot.visible = true;
+      lakePlot.visible = false;
+      // force child visibility states
+      gunturPlot.traverse(o => { if (o.visible === false) o.visible = true; });
+      lakePlot.traverse(o => { if (o !== lakePlot) o.visible = false; });
+    } else if (name === 'lake') {
+      lakePlot.visible = true;
+      gunturPlot.visible = false;
+      lakePlot.traverse(o => { if (o.visible === false) o.visible = true; });
+      gunturPlot.traverse(o => { if (o !== gunturPlot) o.visible = false; });
+    } else {
+      gunturPlot.visible = false;
+      lakePlot.visible = false;
+    }
+  }
   const gltfLoader = new GLTFLoader();
   let treeTrunks = null; // InstancedMesh placeholders (optional)
   let treeCrowns = null;
@@ -161,6 +205,7 @@ export function createPlanet() {
   const lfCore = new THREE.Mesh(lfCoreGeo, lfCoreMat);
   lfCore.position.copy(lfPos);
   earthGroup.add(lfCore);
+  lfCore.userData.isLakeForest = true;
 
   // Lake Forest ripple rings (use same effect as Guntur)
   function createRingAt(position, lookTarget, radiusScale) {
@@ -423,56 +468,43 @@ export function createPlanet() {
   controls.dampingFactor = 0.05;
   controls.rotateSpeed = 0.5;
   
-  // Simple verde scandal house (inspired by sunposition's minimal scene building)
-  function buildHouse(group) {
+  // Builders
+  function buildFenceAndPosts(group, fenceRadius = 2.55) {
+    const fencePostMat = new THREE.MeshPhongMaterial({ color: 0x303030 });
+    const posts = 18;
+    const gateSpan = Math.PI / 7;
+    const gateCenter = -Math.PI / 2;
+    const postH = 0.22;
+    const postGeo = new THREE.CylinderGeometry(0.02, 0.02, postH, 10);
+    for (let i = 0; i < posts; i++) {
+      const ang = (i / posts) * Math.PI * 2;
+      const delta = Math.atan2(Math.sin(ang - gateCenter), Math.cos(ang - gateCenter));
+      if (Math.abs(delta) < gateSpan * 0.5) continue;
+      const x = Math.cos(ang) * fenceRadius;
+      const z = Math.sin(ang) * fenceRadius;
+      const post = new THREE.Mesh(postGeo, fencePostMat);
+      post.position.set(x, postH / 2, z);
+      group.add(post);
+    }
+  }
+
+  function buildGardenGrass(group, centerX, centerZ) {
+    const grassMat = new THREE.MeshPhongMaterial({ color: 0xd5fa1b });
+    const grass = new THREE.Mesh(new THREE.CircleGeometry(0.9, 64), grassMat);
+    grass.rotation.x = -Math.PI / 2;
+    grass.position.set(centerX, 0.001, centerZ);
+    group.add(grass);
+  }
+
+  function buildLakePlot(group) {
+    // Fresh lake plot (remove any prior meshes)
+    clearGroup(group);
+    birdsLake.length = 0;
     // Platform (smaller to avoid overlap with planet elements)
     const platform = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 0.18, 48), new THREE.MeshPhongMaterial({ color: 0x0a0a0a }));
     platform.position.y = -0.09;
     group.add(platform);
 
-    // Option A: Load a GLTF modern house similar to the reference demo
-    const draco = new DRACOLoader();
-    draco.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-    const gltf = new GLTFLoader();
-    gltf.setDRACOLoader(draco);
-    gltf.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/AVIFTest/forest_house.glb', (res)=>{
-      const model = res.scene;
-      model.scale.set(0.22, 0.22, 0.22); // slightly bigger to blend with modern house/trees
-      // move GLTF house to former hut spot
-      model.position.set(-1.0, 0, 0.9);
-      // reverse facing
-      model.rotation.y = Math.PI;
-      // theme walls verde scandal, roof black, keep GLTF trees/leaves natural
-      const modelBox = new THREE.Box3().setFromObject(model);
-      const totalH = (modelBox.max.y - modelBox.min.y) || 1;
-      const roofBandY = modelBox.max.y - 0.2 * totalH; // top 20%
-      const isLeaves = (n) => /leaf|leaves|foliage|pine|needles/i.test(n || '');
-      const isTrunk  = (n) => /trunk|bark|wood|stem/i.test(n || '');
-      const roofBrown = new THREE.Color(0x6b4f2a);
-      model.traverse(o=>{
-        if (!o.isMesh || !o.material) return;
-        const mat = o.material;
-        const hasColor = !!mat.color;
-        const bb = new THREE.Box3().setFromObject(o);
-        const dx = bb.max.x - bb.min.x;
-        const dy = bb.max.y - bb.min.y;
-        const dz = bb.max.z - bb.min.z;
-        const flat = dy < Math.max(dx, dz) * 0.25; // thin compared to span
-        const nearTop = bb.max.y >= roofBandY;
-        if (hasColor) {
-          if (isLeaves(o.name)) {
-            mat.color = new THREE.Color(0xa9ff1b); // our modern leaves green
-          } else if (isTrunk(o.name)) {
-            mat.color = new THREE.Color(0x5a3b27); // trunk brown
-          } else if (nearTop && flat) {
-            mat.color = roofBrown; // roof brown
-          } else {
-            mat.color = new THREE.Color(0xd5fa1b); // theme walls/other
-          }
-        }
-      });
-      group.add(model);
-    }, undefined, ()=>{/* fallback to procedural if needed */});
 
     // Procedural modern house fallback disabled to prefer exact GLTF model
     const facadeMat = new THREE.MeshPhysicalMaterial({ color: 0xd5fa1b, metalness: 0.25, roughness: 0.5, clearcoat: 0.35 });
@@ -493,9 +525,11 @@ export function createPlanet() {
     door.position.set(-0.5, 0.28, 0.41);
     modern.add(blockA, blockB, roof, windowWall, door);
     modern.position.set(0.7, 0, 0.2); // a little to the right
+    modern.scale.set(1.25, 1.25, 1.25); // make modern plot bigger
 
     // Remove tank/car per request; add modern subgroup
     group.add(modern);
+    buildGardenGrass(group, modern.position.x, modern.position.z);
 
     // Fewer trees around platform (leave space for pool)
     const trunkMat = new THREE.MeshPhongMaterial({ color: 0x5a3b27 });
@@ -507,7 +541,7 @@ export function createPlanet() {
       crown.position.set(x, 0.65*s, z);
       group.add(trunk, crown);
     }
-    const ring = 1.6;
+    const ring = 1.9; // widen tree ring for larger plot
     const treePositions = [
       [Math.cos(0)*ring, Math.sin(0)*ring],
       [Math.cos(1.7)*ring, Math.sin(1.7)*ring], // moved a bit more away from GLTF house
@@ -516,13 +550,7 @@ export function createPlanet() {
     treePositions.forEach(([tx,tz],i)=>addTree(tx, tz, 0.9 + (i%2)*0.15));
 
     // Garden shrubs around platform
-    const shrubMat = new THREE.MeshPhongMaterial({ color: 0xa9ff1b });
-    function addShrub(x, z, s = 1) {
-      const shrub = new THREE.Mesh(new THREE.IcosahedronGeometry(0.12 * s, 0), shrubMat);
-      shrub.position.set(x, 0.12 * s, z);
-      group.add(shrub);
-    }
-    // Remove platform shrubs per request
+    // No shrubs per request
 
     // Grass patch around modern house base
     const grassMat = new THREE.MeshPhongMaterial({ color: 0xd5fa1b });
@@ -577,30 +605,12 @@ export function createPlanet() {
     addPole(-0.2, -1.1, 0.58); // opposite edge
     addPole(1.1, -0.4, 0.64);  // another corner
 
-    // Fence around the platform with a gate opening
-    const fencePostMat = new THREE.MeshPhongMaterial({ color: 0x303030 });
-    const fenceRailMat = new THREE.MeshPhongMaterial({ color: 0x202020 });
-    const fenceRadius = 2.55; // slightly outside platform
-    const posts = 18;
-    const gateSpan = Math.PI / 7; // opening angle for gate
-    const gateCenter = -Math.PI / 2; // gate facing toward camera initially
-    const postH = 0.22;
-    const postGeo = new THREE.CylinderGeometry(0.02, 0.02, postH, 10);
-    for (let i = 0; i < posts; i++) {
-      const ang = (i / posts) * Math.PI * 2;
-      const delta = Math.atan2(Math.sin(ang - gateCenter), Math.cos(ang - gateCenter));
-      if (Math.abs(delta) < gateSpan * 0.5) continue; // skip posts in gate span
-      const x = Math.cos(ang) * fenceRadius;
-      const z = Math.sin(ang) * fenceRadius;
-      const post = new THREE.Mesh(postGeo, fencePostMat);
-      post.position.set(x, postH / 2, z);
-      group.add(post);
-      // No rails/chains per request; keep posts as border only
-    }
+    // Fence posts only (reset to normal radius)
+    buildFenceAndPosts(group, 2.55);
 
     // Remove hut per request
 
-    // Birds: custom parrot-like silhouette (body + thin wings + tail), no GLTF
+    // Birds around Lake plot
     const verdeMatFlat = new THREE.MeshBasicMaterial({ color: 0xd5fa1b, side: THREE.DoubleSide });
     const verdeMatLit = new THREE.MeshPhongMaterial({ color: 0xd5fa1b, shininess: 30 });
     function tri(ax,ay,az,bx,by,bz,cx,cy,cz){
@@ -609,7 +619,7 @@ export function createPlanet() {
       g.computeVertexNormals();
       return new THREE.Mesh(g, verdeMatFlat);
     }
-    function createVBird() {
+    function createVBirdLake() {
       const bird = new THREE.Group();
       const wingSpan = 0.1;
       const wingHeight = 0.03;
@@ -637,14 +647,96 @@ export function createPlanet() {
         wingR
       };
       group.add(bird);
-      birds.push(bird);
+      birdsLake.push(bird);
     }
     const numBirds = 14;
-    for (let i = 0; i < numBirds; i++) createVBird();
+    for (let i = 0; i < numBirds; i++) createVBirdLake();
 
     group.position.set(0, 0, 0);
   }
-  buildHouse(houseGroup);
+  function buildGunturPlot(group) {
+    // Platform and fence
+    const platform = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.18, 48), new THREE.MeshPhongMaterial({ color: 0x0a0a0a }));
+    platform.position.y = -0.09;
+    group.add(platform);
+    buildFenceAndPosts(group, 2.55);
+    // GLTF house centered and larger
+    const draco = new DRACOLoader();
+    draco.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+    const gltf = new GLTFLoader();
+    gltf.setDRACOLoader(draco);
+    gltf.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/AVIFTest/forest_house.glb', (res)=>{
+      const model = res.scene;
+      model.scale.set(0.44, 0.44, 0.44);
+      model.position.set(0, 0, 0);
+      model.rotation.y = Math.PI;
+      const modelBox = new THREE.Box3().setFromObject(model);
+      const totalH = (modelBox.max.y - modelBox.min.y) || 1;
+      const roofBandY = modelBox.max.y - 0.2 * totalH;
+      const isLeaves = (n) => /leaf|leaves|foliage|pine|needles/i.test(n || '');
+      const isTrunk  = (n) => /trunk|bark|wood|stem/i.test(n || '');
+      const roofBrown = new THREE.Color(0x6b4f2a);
+      model.traverse(o=>{
+        if (!o.isMesh || !o.material) return;
+        const mat = o.material;
+        const hasColor = !!mat.color;
+        const bb = new THREE.Box3().setFromObject(o);
+        const dx = bb.max.x - bb.min.x;
+        const dy = bb.max.y - bb.min.y;
+        const dz = bb.max.z - bb.min.z;
+        const flat = dy < Math.max(dx, dz) * 0.25;
+        const nearTop = bb.max.y >= roofBandY;
+        if (hasColor) {
+          if (isLeaves(o.name)) {
+            mat.color = new THREE.Color(0xa9ff1b);
+          } else if (isTrunk(o.name)) {
+            mat.color = new THREE.Color(0x5a3b27);
+          } else if (nearTop && flat) {
+            mat.color = roofBrown;
+          } else {
+            mat.color = new THREE.Color(0xd5fa1b);
+          }
+        }
+      });
+      group.add(model);
+    });
+    // Birds for Guntur plot
+    const verdeMatFlat = new THREE.MeshBasicMaterial({ color: 0xd5fa1b, side: THREE.DoubleSide });
+    function createVBirdGuntur() {
+      const bird = new THREE.Group();
+      const wingSpan = 0.1;
+      const wingHeight = 0.03;
+      const wingGeometry = new THREE.BufferGeometry();
+      const positions = new Float32Array([
+        0, 0, 0,
+        wingSpan, 0, 0,
+        wingSpan / 2, wingHeight, 0,
+      ]);
+      wingGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const wingL = new THREE.Mesh(wingGeometry, verdeMatFlat);
+      const wingR = new THREE.Mesh(wingGeometry.clone(), verdeMatFlat);
+      wingR.scale.x = -1;
+      bird.add(wingL, wingR);
+      bird.scale.set(0.8, 0.8, 0.8);
+      bird.userData = {
+        r: 1.4 + Math.random()*0.6,
+        h: 0.75 + Math.random()*0.4,
+        sp: 0.9 + Math.random()*0.6,
+        ph: Math.random()*Math.PI*2,
+        flap: 8 + Math.random()*4,
+        hiddenStart: 0,
+        wingL,
+        wingR
+      };
+      group.add(bird);
+      birdsGuntur.push(bird);
+    }
+    for (let i = 0; i < 12; i++) createVBirdGuntur();
+  }
+
+  // Build both plots
+  buildLakePlot(lakePlot);
+  buildGunturPlot(gunturPlot);
 
   // Camera motion tracking for particle wind coupling
   const prevCamPos = new THREE.Vector3().copy(camera.position);
@@ -762,6 +854,26 @@ export function createPlanet() {
   function animate() {
     requestAnimationFrame(animate);
     
+    // Enforce single-plot visibility every frame
+    if (mode === 'house') {
+      if (activePlot === 'guntur') {
+        if (!gunturPlot.visible || lakePlot.visible) {
+          gunturPlot.visible = true;
+          lakePlot.visible = false;
+        }
+      } else if (activePlot === 'lake') {
+        if (!lakePlot.visible || gunturPlot.visible) {
+          lakePlot.visible = true;
+          gunturPlot.visible = false;
+        }
+      }
+    } else {
+      if (gunturPlot.visible || lakePlot.visible) {
+        gunturPlot.visible = false;
+        lakePlot.visible = false;
+      }
+    }
+
     // Ripple animation (Guntur marker)
     t += rippleSpeed;
     [ring1, ring2, ring3].forEach((ring, i) => {
@@ -864,11 +976,12 @@ export function createPlanet() {
     moon.rotation.y += 0.002;
 
     // Animate birds around the house
-    if (houseGroup.visible && birds.length) {
+    // Animate birds around whichever plot is visible
+    if (houseGroup.visible) {
       const tNow = performance.now() * 0.001;
-      // advance GLTF bird mixers for wing flaps
-      for (let i = 0; i < birds.length; i++) {
-        const b = birds[i];
+      const activeBirds = activePlot === 'guntur' ? birdsGuntur : (activePlot === 'lake' ? birdsLake : []);
+      for (let i = 0; i < activeBirds.length; i++) {
+        const b = activeBirds[i];
         const d = b.userData || {};
         const a = tNow * (d.sp || 1.0) + (d.ph || 0);
         const r = d.r || 1.4;
@@ -1001,15 +1114,26 @@ export function createPlanet() {
     mouse.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects([core], true);
+    const intersects = raycaster.intersectObjects([core, lfCore], true);
     if (intersects.length && intersects[0].object.userData.isGuntur) {
-      // Toggle to house view
+      // Toggle to house view at Guntur plot
       mode = 'house';
-      // save camera/target
       savedCam.position.copy(camera.position);
       savedCam.target = controls.target.clone();
       earthGroup.visible = false;
       houseGroup.visible = true;
+      setActivePlot('guntur');
+      controls.target.set(0, 0.5, 0);
+      camera.position.set(2.8, 1.6, 3.2);
+      controls.update();
+    } else if (intersects.length && intersects[0].object.userData.isLakeForest) {
+      // Toggle to house view at Lake Forest plot
+      mode = 'house';
+      savedCam.position.copy(camera.position);
+      savedCam.target = controls.target.clone();
+      earthGroup.visible = false;
+      houseGroup.visible = true;
+      setActivePlot('lake');
       controls.target.set(0, 0.5, 0);
       camera.position.set(2.8, 1.6, 3.2);
       controls.update();
@@ -1021,6 +1145,7 @@ export function createPlanet() {
     if (e.key === 'Escape' && mode === 'house') {
       mode = 'planet';
       houseGroup.visible = false;
+      setActivePlot(null);
       earthGroup.visible = true;
       controls.target.copy(savedCam.target || new THREE.Vector3());
       camera.position.copy(savedCam.position || new THREE.Vector3(0,0,4.5));
