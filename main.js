@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!form || !input || !list || !win || !wrapper) return;
 
     const messages = [];
+    let notificationSent = false; // flag to send only once per session
 
     function appendBubble(role, text) {
       const row = document.createElement('div');
@@ -160,14 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
         messages.push({ role: 'assistant', content: reply });
         appendBubble('assistant', reply);
         
-        // Send email transcript and SMS notification
-        if (data?.contactInfo) {
-          console.log('Contact info detected, sending email + SMS...');
-          const sent = await sendContactEmail(data.contactInfo);
-          if (sent) {
-            console.log('Email sent successfully');
-          }
-          // Send SMS notification
+        // Send notification only once per session when we have enough context
+        if (data?.contactInfo && !notificationSent) {
+          console.log('Contact info detected, sending notification...');
+          notificationSent = true; // prevent duplicate notifications
           await sendSMSNotification(data.contactInfo);
         }
       } catch (e) {
@@ -178,19 +175,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function sendSMSNotification(contactInfo) {
       try {
-        const preview = contactInfo.message.slice(0, 60);
+        // Build conversation summary for final notification
+        const conversationSummary = messages.map((m, i) => 
+          `${m.role === 'user' ? 'User' : 'MAIA'}: ${m.content.slice(0, 100)}`
+        ).join(' | ');
+        
         await fetch('/.netlify/functions/send-sms', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             visitorName: contactInfo.name,
-            preview: preview,
+            preview: conversationSummary.slice(0, 150), // full context summary
             timestamp: new Date().toLocaleString()
           })
         });
-        console.log('SMS notification sent');
+        console.log('WhatsApp notification sent (once per session)');
       } catch (err) {
-        console.error('SMS error:', err);
+        console.error('WhatsApp error:', err);
       }
     }
 
