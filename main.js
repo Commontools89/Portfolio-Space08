@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             break;
           case 'contact':
             contentDiv.innerHTML = Contact();
-            setupContactForm();
+            setupGenAIChat();
             break;
           case 'planet':
             contentDiv.innerHTML = Planet();
@@ -125,109 +125,64 @@ document.addEventListener('DOMContentLoaded', () => {
     emailjs.init("Bb2IL9GPVGwGFwKmK"); // Add your public key from EmailJS dashboard
   })();
 
-  function setupContactForm() {
-    const form = document.getElementById('contact-form');
-    if (form) {
-      const sendButton = form.querySelector('.send-button');
-      const shipBtn = form.querySelector('.send-ship');
-      const shipWrap = form.querySelector('.ship-wrap');
-      
-      // Button animations
-      sendButton.addEventListener('mousedown', () => {
-        sendButton.classList.add('hold');
-      });
+  function setupGenAIChat() {
+    const form = document.getElementById('ai-chat-form');
+    const input = document.getElementById('ai-chat-input');
+    const win = document.getElementById('ai-chat-window');
+    const list = document.getElementById('ai-chat-messages');
+    const shipBtn = form?.querySelector('.send-ship');
+    const shipWrap = form?.querySelector('.ship-wrap');
+    if (!form || !input || !list || !win) return;
 
-      sendButton.addEventListener('mouseup', () => {
-        sendButton.classList.remove('hold');
-        sendButton.classList.add('clicked');
-        setTimeout(() => {
-          sendButton.classList.remove('clicked');
-        }, 400);
-      });
+    const messages = [];
 
-      // Paper-rocket loop flight on click
-      sendButton.addEventListener('click', () => {
-        if (!shipBtn || !shipWrap) return;
-        if (shipBtn.classList.contains('looping')) return;
-        shipBtn.classList.add('looping');
-        const onEnd = () => {
-          shipBtn.classList.remove('looping');
-        };
-        shipWrap.addEventListener('animationend', onEnd, { once: true });
-      });
-
-      // Form submission
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Get form data
-        const formData = {
-          from_name: form.querySelector('[name="from_name"]').value,
-          reply_to: form.querySelector('[name="reply_to"]').value,
-          message: form.querySelector('[name="message"]').value,
-        };
-
-        const chatMessages = document.querySelector('.chat-messages');
-
-        // Add user's message to chat
-        const userMessageHTML = `
-          <div class="message sent" style="animation-delay: 0.2s">
-            <div class="message-content">
-              <div class="message-bubble">
-                ${formData.message}
-              </div>
-              <div class="message-time">Just now</div>
-            </div>
-          </div>
-        `;
-        chatMessages.insertAdjacentHTML('beforeend', userMessageHTML);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-
-        try {
-          // Send email using EmailJS
-          await emailjs.send(
-            'service_c7qjp5g', // Add your EmailJS service ID
-            'template_svorfoe', // Add your EmailJS template ID
-            formData
-          );
-
-          // Show success message
-          const responseHTML = `
-            <div class="message received" style="animation-delay: 0.4s">
-              <div class="message-content">
-                <div class="message-bubble">
-                  Got your signal! I'll get back to you in a rotation.
-                </div>
-                <div class="message-time">Just now</div>
-              </div>
-            </div>
-          `;
-          chatMessages.insertAdjacentHTML('beforeend', responseHTML);
-          chatMessages.scrollTop = chatMessages.scrollHeight;
-          
-          // Do not auto-run loop on success; only on explicit click
-
-          // Clear form
-          form.reset();
-
-        } catch (error) {
-          console.error('Failed to send email:', error);
-          // Show error message
-          const errorHTML = `
-            <div class="message received" style="animation-delay: 0.4s">
-              <div class="message-content">
-                <div class="message-bubble error">
-                  Oops! Something went wrong. Please try again later.
-                </div>
-                <div class="message-time">Just now</div>
-              </div>
-            </div>
-          `;
-          chatMessages.insertAdjacentHTML('beforeend', errorHTML);
-          chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-      });
+    function appendBubble(role, text) {
+      const row = document.createElement('div');
+      row.className = `ai-row ${role}`;
+      const bubble = document.createElement('div');
+      bubble.className = 'ai-bubble';
+      bubble.textContent = text;
+      row.appendChild(bubble);
+      list.appendChild(row);
+      list.scrollTop = list.scrollHeight;
     }
+
+    async function callClaude() {
+      try {
+        const resp = await fetch('/.netlify/functions/claude-chat', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ messages })
+        });
+        const data = await resp.json();
+        const reply = data?.reply || '...';
+        messages.push({ role: 'assistant', content: reply });
+        appendBubble('assistant', reply);
+      } catch (e) {
+        appendBubble('assistant', 'Oops, I had trouble responding. Please try again.');
+      }
+    }
+
+    // Loop animation on click
+    form.addEventListener('click', (ev) => {
+      const isButton = ev.target.closest && ev.target.closest('.send-button');
+      if (!isButton || !shipBtn || !shipWrap) return;
+      if (shipBtn.classList.contains('looping')) return;
+      shipBtn.classList.add('looping');
+      shipWrap.addEventListener('animationend', () => shipBtn.classList.remove('looping'), { once: true });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = (input.value || '').trim();
+      if (!text) return;
+      // reveal square chat window on first submit
+      if (!win.classList.contains('visible')) win.classList.add('visible');
+      appendBubble('user', text);
+      messages.push({ role: 'user', content: text });
+      input.value = '';
+      await callClaude();
+    });
   }
 });
 
