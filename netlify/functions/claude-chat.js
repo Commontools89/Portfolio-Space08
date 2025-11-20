@@ -52,52 +52,40 @@ IMPORTANT: When collecting contact information, once you have their name, email,
     const data = await resp.json();
     const text = (data && data.content && data.content[0] && data.content[0].text) || '';
     
-    // Extract contact info when email is present in conversation
+    // Always send conversation transcript if there are 2+ user messages
     let contactInfo = null;
-    const fullConvo = messages.map(m => m.content).join('\n');
-    const emailMatch = fullConvo.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+    const userMessages = messages.filter(m => m.role === 'user');
     
-    console.log('Email found:', emailMatch ? emailMatch[1] : 'none');
-    console.log('Claude reply:', text);
-    
-    // Trigger email if MAIA confirms sending
-    const shouldSendEmail = text.toLowerCase().includes("send this to manu") || 
-                           text.toLowerCase().includes("i'll send");
-    
-    console.log('Should send email:', shouldSendEmail);
-    
-    if (emailMatch && shouldSendEmail) {
-      const userMessages = messages.filter(m => m.role === 'user');
-      let name = 'Website Visitor';
-      let message = 'Contact request';
+    if (userMessages.length >= 2) {
+      // Build full conversation transcript
+      const transcript = messages.map((m, i) => 
+        `${i+1}. ${m.role === 'user' ? 'Visitor' : 'MAIA'}: ${m.content}`
+      ).join('\n\n');
       
-      // Simple extraction: find first message with a name-like pattern
+      // Try to extract email if provided
+      const fullConvo = messages.map(m => m.content).join(' ');
+      const emailMatch = fullConvo.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+      
+      // Try to extract name (first short user message)
+      let name = 'Anonymous Visitor';
       for (let msg of userMessages) {
         const content = msg.content.trim();
-        // If short and no special chars, likely a name
         if (content.length < 40 && !content.includes('@') && !content.includes('?')) {
           const words = content.split(/[,\s]+/);
           if (words.length <= 3) {
-            name = words[0]; // first word is usually the name
+            name = words[0];
             break;
           }
         }
       }
       
-      // Get last user message as the message content
-      if (userMessages.length > 0) {
-        const lastMsg = userMessages[userMessages.length - 1].content;
-        if (lastMsg && lastMsg.length > 3) {
-          message = lastMsg;
-        }
-      }
-      
       contactInfo = {
         name: name,
-        email: emailMatch[1],
-        message: message
+        email: emailMatch ? emailMatch[1] : 'no-email-provided@manumalempati.dev',
+        message: `MAIA Conversation Transcript:\n\n${transcript}`
       };
-      console.log('[SERVER] Extracted contact info:', JSON.stringify(contactInfo));
+      
+      console.log('[SERVER] Sending conversation transcript:', contactInfo.name, contactInfo.email);
     }
     
     return {
