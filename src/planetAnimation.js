@@ -760,7 +760,7 @@ export function createPlanet() {
   let particleSeed = Math.floor(Math.random() * 1e9) >>> 0;
   let simStartMs = Date.now();
   const particleRadius = radius * 2.0;
-  let particleCount = 6500; // denser halo around entire globe
+  let particleCount = 8000; // slightly higher density around entire globe
   // Band shards per active window (so particles "transfer" between tabs)
   let bandPoints = [];
   let bandGeos = [];
@@ -836,10 +836,10 @@ export function createPlanet() {
       geo.setAttribute('position', new THREE.BufferAttribute(bandPos[s], 3));
       bandGeos[s] = geo;
       const mat = new THREE.PointsMaterial({
-        color: 0xff9008,
-        size: 0.0055,
+        color: 0xffa500,
+        size: 0.0063,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.95,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         sizeAttenuation: true,
@@ -1234,7 +1234,7 @@ export function createPlanet() {
       const mat = bandPoints[s].material;
       mat.opacity = isMine ? 0.0 : mat.opacity; // start fade-in for own shard
       bandPoints[s].visible = true; // keep visible during fade
-      bandPoints[s].userData.targetOpacity = isMine ? 0.9 : 0.0;
+      bandPoints[s].userData.targetOpacity = isMine ? 0.95 : 0.0;
       // set radial travel targets for visible transfer (outward for losing, inward for gaining)
       if (typeof bandPoints[s].userData.radialOffset !== 'number') {
         bandPoints[s].userData.radialOffset = isMine ? (radius * 0.6) : 0;
