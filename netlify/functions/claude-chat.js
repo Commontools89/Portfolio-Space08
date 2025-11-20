@@ -26,7 +26,9 @@ About Manu:
 - Passionate about autonomous vehicles for mining operations - plans to start working on this goal in a couple of years
 - Relationship status: Currently single. He has had several past relationships and remains fond of two of his ex-girlfriends known as HP and DC.
 
-When asked about his personal life or relationships, feel free to mention he's currently single but speaks warmly of his exes, particularly HP and DC. This is public information he's comfortable sharing. Use all context naturally and conversationally. If they want to reach out to Manu, gently collect their name, email, and message in 2-3 short turns. Keep all responses brief, warm, and personable.`
+When asked about his personal life or relationships, feel free to mention he's currently single but speaks warmly of his exes, particularly HP and DC. This is public information he's comfortable sharing. Use all context naturally and conversationally. 
+
+IMPORTANT: When collecting contact information, once you have their name, email, and message, end your response by saying "I'll send this to Manu now!" - this triggers the automatic email. Keep all responses brief, warm, and personable.`
         }
       ],
       messages: (messages || []).map(m => ({
@@ -50,19 +52,40 @@ When asked about his personal life or relationships, feel free to mention he's c
     const data = await resp.json();
     const text = (data && data.content && data.content[0] && data.content[0].text) || '';
     
-    // Extract contact info if Claude collected it (simple pattern matching)
+    // Extract contact info from conversation (look for email first, then find nearby name/message)
     let contactInfo = null;
-    const conversationText = messages.map(m => m.content).join(' ');
-    const nameMatch = conversationText.match(/name[:\s]+([a-zA-Z\s]+?)(?:,|\.|email)/i);
-    const emailMatch = conversationText.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
-    const messageMatch = conversationText.match(/message[:\s]+(.+?)(?:\.|$)/i);
+    const fullConvo = messages.map(m => `${m.role}: ${m.content}`).join('\n');
+    const emailMatch = fullConvo.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
     
-    // If we have email and name, extract contact info
-    if (emailMatch && nameMatch) {
+    if (emailMatch) {
+      // Found email - extract name and message from user messages
+      const userMessages = messages.filter(m => m.role === 'user');
+      let name = '';
+      let message = '';
+      
+      // Try to find name (first user message that's just a name or contains name pattern)
+      for (let msg of userMessages) {
+        const content = msg.content.toLowerCase();
+        // Check if it looks like a name (short, no @ symbol, not a question)
+        if (content.length < 50 && !content.includes('@') && !content.includes('?') && !content.includes('contact')) {
+          const words = msg.content.trim().split(/[\s,]+/);
+          if (words.length >= 1 && words.length <= 3 && !emailMatch[0].includes(words[0])) {
+            name = msg.content.split(',')[0].trim();
+            break;
+          }
+        }
+      }
+      
+      // Extract message (look for message after email or last substantive user message)
+      const lastUserMsg = userMessages[userMessages.length - 1];
+      if (lastUserMsg && lastUserMsg.content.length > 10) {
+        message = lastUserMsg.content;
+      }
+      
       contactInfo = {
-        name: nameMatch[1].trim(),
-        email: emailMatch[1].trim(),
-        message: messageMatch ? messageMatch[1].trim() : conversationText.slice(-200)
+        name: name || 'Website Visitor',
+        email: emailMatch[1],
+        message: message || 'User would like to get in touch with Manu.'
       };
     }
     
