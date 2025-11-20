@@ -155,14 +155,18 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ messages })
         });
         const data = await resp.json();
+        console.log('Claude response:', data);
         const reply = data?.reply || '...';
         messages.push({ role: 'assistant', content: reply });
         appendBubble('assistant', reply);
         
         // Check if Claude collected contact info and trigger email send
         if (data?.contactInfo) {
-          await sendContactEmail(data.contactInfo);
-          appendBubble('assistant', '✓ Message sent to Manu! He\'ll get back to you soon.');
+          console.log('Contact info detected, sending email...');
+          const sent = await sendContactEmail(data.contactInfo);
+          if (sent) {
+            appendBubble('assistant', '✓ Email sent successfully!');
+          }
         }
       } catch (e) {
         console.error('Claude API error:', e);
@@ -172,7 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function sendContactEmail(contactInfo) {
       try {
-        await emailjs.send(
+        console.log('Sending email with contactInfo:', contactInfo);
+        const result = await emailjs.send(
           'service_c7qjp5g',
           'template_svorfoe',
           {
@@ -181,8 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
             message: contactInfo.message || ''
           }
         );
+        console.log('EmailJS success:', result);
+        return true;
       } catch (err) {
         console.error('EmailJS error:', err);
+        return false;
       }
     }
 

@@ -4,13 +4,14 @@
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - 80px);
+  min-height: calc(100vh - 80px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start; /* always start from top */
   gap: 40px;
-  padding: 100px 28px 32px; /* reduced bottom padding to move input up by ~48px (half inch) */
+  padding: 90px 28px 40px; /* moved chat window up by reducing top padding */
   box-sizing: border-box;
 }
 

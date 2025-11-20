@@ -52,45 +52,48 @@ IMPORTANT: When collecting contact information, once you have their name, email,
     const data = await resp.json();
     const text = (data && data.content && data.content[0] && data.content[0].text) || '';
     
-    // Extract contact info when Claude says the trigger phrase
+    // Extract contact info when email is present in conversation
     let contactInfo = null;
-    if (text.includes("I'll send this to Manu now!") || text.includes("I'll send this to Manu")) {
-      const fullConvo = messages.map(m => m.content).join(' ');
-      const emailMatch = fullConvo.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+    const fullConvo = messages.map(m => m.content).join(' ');
+    const emailMatch = fullConvo.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+    
+    // Trigger email if MAIA confirms sending OR if email was provided in last 2 messages
+    const shouldSendEmail = text.toLowerCase().includes("send this to manu") || 
+                           text.toLowerCase().includes("i'll send") ||
+                           (emailMatch && messages.length >= 3);
+    
+    if (emailMatch && shouldSendEmail) {
+      const userMessages = messages.filter(m => m.role === 'user');
+      let name = 'Website Visitor';
+      let message = 'Contact request from website.';
       
-      if (emailMatch) {
-        // Extract name and message from conversation
-        const userMessages = messages.filter(m => m.role === 'user');
-        let name = 'Website Visitor';
-        let message = '';
-        
-        // Find message with "message is" or similar
-        for (let msg of userMessages) {
-          const lower = msg.content.toLowerCase();
-          if (lower.includes('message') || lower.includes('hey') || lower.includes('how are')) {
-            // Extract message part
-            const parts = msg.content.split(/message\s+is\s+/i);
-            if (parts.length > 1) {
-              message = parts[1].trim();
-            } else if (lower.includes('hey') || lower.includes('how')) {
-              message = msg.content;
-            }
-          }
-          // Extract name (look for comma-separated or standalone short text)
-          if (!lower.includes('@') && !lower.includes('message') && msg.content.length < 30) {
-            const firstPart = msg.content.split(',')[0].trim();
-            if (firstPart.length > 1 && firstPart.length < 25) {
-              name = firstPart;
-            }
-          }
+      // Extract name (first short user message without @ or keywords)
+      for (let msg of userMessages) {
+        const content = msg.content.trim();
+        const lower = content.toLowerCase();
+        if (content.length < 30 && !content.includes('@') && 
+            !lower.includes('contact') && !lower.includes('message') &&
+            !lower.includes('email') && !content.includes('?')) {
+          name = content.split(',')[0].trim();
+          break;
         }
-        
-        contactInfo = {
-          name: name,
-          email: emailMatch[1],
-          message: message || 'User would like to connect with Manu.'
-        };
       }
+      
+      // Extract message (last user message or one containing message keywords)
+      for (let i = userMessages.length - 1; i >= 0; i--) {
+        const content = userMessages[i].content;
+        if (content.length > 5 && !content.includes('@')) {
+          message = content;
+          break;
+        }
+      }
+      
+      contactInfo = {
+        name: name,
+        email: emailMatch[1],
+        message: message
+      };
+      console.log('Extracted contact info:', JSON.stringify(contactInfo));
     }
     
     return {
