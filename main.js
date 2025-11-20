@@ -149,7 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function callClaude() {
       try {
-        const resp = await fetch('/.netlify/functions/claude-chat', {
+        const endpoint = (import.meta.env && import.meta.env.VITE_API_BASE_URL)
+          ? `${import.meta.env.VITE_API_BASE_URL}/api/claude`
+          : '/api/claude';
+        const resp = await fetch(endpoint, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ messages })
@@ -163,14 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Loop animation on click
-    form.addEventListener('click', (ev) => {
-      const isButton = ev.target.closest && ev.target.closest('.send-button');
-      if (!isButton || !shipBtn || !shipWrap) return;
-      if (shipBtn.classList.contains('looping')) return;
-      shipBtn.classList.add('looping');
-      shipWrap.addEventListener('animationend', () => shipBtn.classList.remove('looping'), { once: true });
-    });
+    // No send animations; just normal click
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
