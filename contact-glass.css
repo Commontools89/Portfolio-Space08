@@ -9,7 +9,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-end; /* keep input at bottom */
-  gap: 20px;
+  gap: 40px; /* increased gap between chat window and input */
   padding: 20px 28px 30px;
   box-sizing: border-box;
 }
@@ -22,6 +22,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0; /* prevent input from shrinking */
+  z-index: 10; /* above chat window shadow */
 }
 
 .chat-window-wrapper {
@@ -75,7 +76,7 @@
   height: 100%;
   left: 0;
   bottom: 0;
-  z-index: -1;
+  z-index: -2; /* behind everything to prevent overflow onto input */
   transform: translateZ(-50px);
   background: linear-gradient(
     45deg,
@@ -83,6 +84,7 @@
     rgba(255, 138, 0, 0.1) 100%
   );
   filter: blur(25px);
+  pointer-events: none;
 }
 
 /* Glass-morphism input form */
@@ -214,10 +216,11 @@
 /* Responsive sizing */
 @media (max-width: 768px) {
   .genai-chat-container {
-    padding: 4px 24px 50px; /* moved up significantly (~96px = 1 inch) */
-    max-height: none;
+    padding: 80px 24px 40px; /* balanced: below nav, above bottom */
+    max-height: calc(100vh - 80px);
     min-height: calc(100vh - 80px);
-    gap: 20px;
+    gap: 24px;
+    justify-content: center; /* center content vertically */
   }
   .input-wrapper {
     width: calc(100% - 8px);
@@ -267,7 +270,7 @@
 /* Small phones (iPhone SE, iPhone 12/13/14 mini, etc.) */
 @media (max-width: 430px) {
   .genai-chat-container {
-    padding: 0px 12px 40px; /* moved up by 1 inch */
+    padding: 75px 12px 35px; /* balanced for small screens */
   }
   #ai-chat-form {
     width: calc(100vw - 32px);
@@ -293,7 +296,7 @@
 /* Extra small phones (iPhone SE 1st gen, etc.) */
 @media (max-width: 375px) {
   .genai-chat-container {
-    padding: 0px 10px 35px; /* moved up by 1 inch */
+    padding: 70px 10px 30px; /* balanced for tiny screens */
   }
   #ai-chat-form {
     width: calc(100vw - 24px);
