@@ -20,20 +20,18 @@ exports.handler = async (event) => {
     
     const { visitorName, preview, timestamp } = JSON.parse(event.body || '{}');
     
-    // Format timestamp for content template
-    const now = new Date();
-    const dateStr = now.toLocaleDateString();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // Build plain WhatsApp message (no template)
+    const whatsappMessage = `🌌 *MAIA Chat Alert*
+
+👤 From: ${visitorName || 'Anonymous'}
+💬 Message: ${preview || 'New conversation'}
+🕐 Time: ${timestamp || new Date().toLocaleString()}
+
+Check Netlify logs for full conversation.`;
     
-    // Send via Twilio WhatsApp API using content template
+    // Send via Twilio WhatsApp API (plain message)
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
     const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
-    
-    // Build content variables exactly as Twilio expects
-    const variables = JSON.stringify({
-      "1": visitorName || 'Anonymous',
-      "2": preview || 'New chat'
-    });
     
     const resp = await fetch(twilioUrl, {
       method: 'POST',
@@ -44,8 +42,7 @@ exports.handler = async (event) => {
       body: new URLSearchParams({
         From: 'whatsapp:+14155238886',
         To: `whatsapp:${toWhatsApp}`,
-        ContentSid: contentSid,
-        ContentVariables: variables
+        Body: whatsappMessage
       }).toString()
     });
     
