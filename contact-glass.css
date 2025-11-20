@@ -8,17 +8,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* center input initially */
+  justify-content: flex-start; /* always start from top */
   gap: 40px;
-  padding: 20px 28px 30px;
+  padding: 100px 28px 30px; /* fixed padding */
   box-sizing: border-box;
-  transition: justify-content 0.4s ease;
-}
-
-/* When chat window is visible, shift to top layout */
-.genai-chat-container.chat-active {
-  justify-content: flex-start;
-  padding-top: 100px;
 }
 
 .input-wrapper {
@@ -30,6 +23,7 @@
   justify-content: center;
   flex-shrink: 0; /* prevent input from shrinking */
   z-index: 10; /* above chat window shadow */
+  margin-top: auto; /* push to bottom of available space */
 }
 
 .chat-window-wrapper {
@@ -38,8 +32,9 @@
   position: relative;
   display: none;
   padding: 22px;
-  flex: 1;
-  max-height: calc(100vh - 280px);
+  flex-shrink: 0; /* prevent shrinking */
+  height: 400px; /* fixed height */
+  max-height: calc(100vh - 340px);
   background: #f0f0f0;
   border: 4px solid #000;
   transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
@@ -61,7 +56,7 @@
 }
 
 .chat-window-wrapper::before {
-  content: "CHAT WITH AI";
+  content: "CHAT WITH MAIA";
   position: absolute;
   top: -22px;
   left: 28px;
@@ -225,17 +220,16 @@
 /* Responsive sizing */
 @media (max-width: 768px) {
   .genai-chat-container {
-    padding: 20px 24px 60px; /* less top padding initially */
+    padding: 90px 24px 50px; /* fixed top padding */
     max-height: calc(100vh - 60px);
     min-height: calc(100vh - 60px);
-    gap: 30px;
-    justify-content: center; /* center input initially */
+    gap: 28px;
+    justify-content: flex-start; /* always from top */
   }
   
-  /* When chat appears, move to top layout */
-  .genai-chat-container.chat-active {
-    justify-content: flex-start;
-    padding-top: 90px;
+  .chat-window-wrapper {
+    height: 350px;
+    max-height: calc(100vh - 320px);
   }
   .input-wrapper {
     width: calc(100% - 8px);
