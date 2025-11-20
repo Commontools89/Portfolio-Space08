@@ -739,30 +739,30 @@ h2 {
   }
 }
 
-/* Layered animated border effects for input (exact from reference) */
+/* Layered animated border effects for input */
 .white,
 .border,
 .darkBorderBg,
 .glow {
   max-height: 70px;
-  max-width: 314px;
+  max-width: 100%;
   height: 100%;
   width: 100%;
   position: absolute;
   overflow: hidden;
   z-index: -1;
   border-radius: 12px;
-  filter: blur(3px);
+  filter: blur(1.5px); /* reduced blur to keep text crisp */
 }
 
 .input {
   background-color: #010201;
   border: none;
-  width: 301px;
-  height: 56px;
+  width: 650px; /* wider left-to-right */
+  height: 52px; /* taller bar */
   border-radius: 10px;
   color: white;
-  padding-inline: 59px;
+  padding: 0 120px 0 20px; /* space for send button */
   font-size: 18px;
   font-family: 'Bangers', cursive;
   letter-spacing: 0.5px;
@@ -934,9 +934,8 @@ h2 {
 
 .white {
   max-height: 63px;
-  max-width: 307px;
   border-radius: 10px;
-  filter: blur(2px);
+  filter: blur(1px);
 }
 
 .white::before {
@@ -965,7 +964,6 @@ h2 {
 
 .border {
   max-height: 59px;
-  max-width: 303px;
   border-radius: 11px;
   filter: blur(0.5px);
 }
@@ -1060,10 +1058,10 @@ h2 {
 
 .glow {
   overflow: hidden;
-  filter: blur(30px);
-  opacity: 0.4;
+  filter: blur(20px); /* reduced glow blur */
+  opacity: 0.35;
   max-height: 130px;
-  max-width: 354px;
+  max-width: 100%;
 }
 
 .glow:before {
@@ -1097,7 +1095,7 @@ h2 {
 
 
 
-/* Chat window wrapper with animated layered borders (same as input) */
+/* Chat window wrapper with animated layered borders (scaled up for larger window) */
 .chat-window-white,
 .chat-window-border,
 .chat-window-darkBg,
@@ -1109,8 +1107,8 @@ h2 {
   height: 100%;
   overflow: hidden;
   z-index: -1;
-  border-radius: 20px; /* match chat window border-radius to prevent corner bleed */
-  filter: blur(3px);
+  border-radius: 20px;
+  filter: blur(2.5px); /* reduced blur to keep content visible */
 }
 
 .chat-window-white {
@@ -1126,11 +1124,11 @@ h2 {
   left: 50%;
   transform: translate(-50%, -50%) rotate(83deg);
   position: absolute;
-  width: 800px;
-  height: 800px;
+  width: 1400px;
+  height: 1400px;
   background-repeat: no-repeat;
   background-position: 0 0;
-  filter: brightness(1.4);
+  filter: brightness(1.6);
   background-image: conic-gradient(
     rgba(0, 0, 0, 0) 0%,
     #a099d8,
@@ -1144,7 +1142,7 @@ h2 {
 
 .chat-window-border {
   border-radius: 20px;
-  filter: blur(0.5px);
+  filter: blur(2px);
 }
 
 .chat-window-border::before {
@@ -1155,9 +1153,9 @@ h2 {
   left: 50%;
   transform: translate(-50%, -50%) rotate(70deg);
   position: absolute;
-  width: 800px;
-  height: 800px;
-  filter: brightness(1.3);
+  width: 1400px;
+  height: 1400px;
+  filter: brightness(1.5);
   background-repeat: no-repeat;
   background-position: 0 0;
   background-image: conic-gradient(
@@ -1179,8 +1177,8 @@ h2 {
   left: 50%;
   transform: translate(-50%, -50%) rotate(82deg);
   position: absolute;
-  width: 800px;
-  height: 800px;
+  width: 1400px;
+  height: 1400px;
   background-repeat: no-repeat;
   background-position: 0 0;
   background-image: conic-gradient(
@@ -1212,7 +1210,7 @@ h2 {
 
 .chat-window-glow {
   overflow: hidden;
-  filter: blur(30px);
+  filter: blur(25px); /* reduced glow blur */
   opacity: 0.4;
 }
 
@@ -1224,8 +1222,8 @@ h2 {
   left: 50%;
   transform: translate(-50%, -50%) rotate(60deg);
   position: absolute;
-  width: 1200px;
-  height: 1200px;
+  width: 1600px;
+  height: 1600px;
   background-repeat: no-repeat;
   background-position: 0 0;
   background-image: conic-gradient(
