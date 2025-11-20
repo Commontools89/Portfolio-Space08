@@ -1,4 +1,4 @@
-// Twilio SMS notification handler
+// Twilio WhatsApp notification handler
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -7,10 +7,10 @@ exports.handler = async (event) => {
   try {
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const fromPhone = process.env.TWILIO_PHONE_FROM;
-    const toPhone = process.env.TWILIO_PHONE_TO;
+    const toWhatsApp = process.env.TWILIO_WHATSAPP_TO; // Your WhatsApp number with country code
+    const contentSid = process.env.TWILIO_CONTENT_SID || 'HXb5b62575e6e4ff6129ad7c8efe1f983e';
     
-    if (!accountSid || !authToken || !fromPhone || !toPhone) {
+    if (!accountSid || !authToken || !toWhatsApp) {
       console.error('Twilio env vars not configured');
       return { 
         statusCode: 500, 
@@ -20,13 +20,12 @@ exports.handler = async (event) => {
     
     const { visitorName, preview, timestamp } = JSON.parse(event.body || '{}');
     
-    // Build SMS message
-    const smsBody = `🌌 MAIA Chat Alert
-From: ${visitorName || 'Anonymous'}
-Preview: ${preview || 'New conversation'}
-Time: ${timestamp || new Date().toLocaleString()}`;
+    // Format timestamp for content template
+    const now = new Date();
+    const dateStr = now.toLocaleDateString();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
-    // Send via Twilio API
+    // Send via Twilio WhatsApp API using content template
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
     const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
     
@@ -37,9 +36,13 @@ Time: ${timestamp || new Date().toLocaleString()}`;
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
-        From: fromPhone,
-        To: toPhone,
-        Body: smsBody
+        From: 'whatsapp:+14155238886',
+        To: `whatsapp:${toWhatsApp}`,
+        ContentSid: contentSid,
+        ContentVariables: JSON.stringify({
+          "1": visitorName || 'Anonymous',
+          "2": preview || 'New chat'
+        })
       })
     });
     
