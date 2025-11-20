@@ -758,11 +758,11 @@ h2 {
 .input {
   background-color: #010201;
   border: none;
-  width: 800px; /* much longer input bar */
+  width: 750px; /* much longer input bar */
   height: 56px;
   border-radius: 10px;
   color: white;
-  padding-inline: 59px;
+  padding-inline: 20px 110px; /* left padding 20px, right padding for button 110px */
   font-size: 18px;
   font-family: 'Bangers', cursive;
   letter-spacing: 0.5px;
@@ -782,11 +782,21 @@ h2 {
   outline: none;
 }
 
-#ai-chat-form {
+#main {
   position: relative;
 }
 
-#ai-chat-form:focus-within > #input-mask {
+#ai-chat-form {
+  position: relative;
+  width: fit-content;
+  height: 56px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  background-color: #010201;
+}
+
+#main:focus-within > #input-mask {
   display: none;
 }
 
@@ -797,7 +807,7 @@ h2 {
   position: absolute;
   background: linear-gradient(90deg, transparent, black);
   top: 18px;
-  left: 70px;
+  left: 25px;
 }
 
 #pink-mask {
@@ -806,22 +816,23 @@ h2 {
   height: 20px;
   position: absolute;
   background: #cf30aa;
-  top: 10px;
-  left: 5px;
+  top: 18px;
+  left: 25px;
   filter: blur(20px);
   opacity: 0.8;
   transition: all 2s;
 }
 
-#ai-chat-form:hover > #pink-mask {
+#main:hover > #pink-mask {
   opacity: 0;
 }
 
 /* Responsive input sizing */
 @media (max-width: 768px) {
   .input {
-    width: 300px;
+    width: 320px;
     font-size: 16px;
+    padding-inline: 15px 100px;
   }
   .white,
   .border,
@@ -832,13 +843,14 @@ h2 {
 }
 @media (min-width: 769px) and (max-width: 1024px) {
   .input {
-    width: 550px;
+    width: 500px;
+    padding-inline: 18px 105px;
   }
   .white,
   .border,
   .darkBorderBg,
   .glow {
-    max-width: 650px;
+    max-width: 600px;
   }
 }
 
@@ -892,7 +904,10 @@ h2 {
 
 /* Subscribe send button with arrow animation */
 .Subscribe-btn {
-  height: 100%;
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  height: 40px;
   width: 95px;
   border: none;
   border-radius: 15px;
@@ -904,11 +919,9 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   transition: all 0.3s;
   font-family: 'Bangers', cursive;
   font-size: 0.9em;
-  flex-shrink: 0;
 }
 
 .arrow {
@@ -916,7 +929,6 @@ h2 {
   margin-right: 150px;
   transition: all 0.3s;
   fill: #d5fa1b;
-  opacity: 0;
 }
 
 .Subscribe-btn:hover {
@@ -925,7 +937,6 @@ h2 {
 
 .Subscribe-btn:hover .arrow {
   margin-right: 0;
-  opacity: 1;
   animation: jello-vertical 0.9s both;
   transform-origin: right;
 }
