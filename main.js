@@ -148,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Paper-rocket loop flight on click
       sendButton.addEventListener('click', () => {
         if (!shipBtn || !shipWrap) return;
+        if (shipBtn.classList.contains('looping')) return;
         shipBtn.classList.add('looping');
         const onEnd = () => {
           shipBtn.classList.remove('looping');
@@ -204,14 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
           chatMessages.insertAdjacentHTML('beforeend', responseHTML);
           chatMessages.scrollTop = chatMessages.scrollHeight;
           
-          // Optionally trigger loop flight on success as well
-          if (shipBtn && shipWrap) {
-            shipBtn.classList.add('looping');
-            const onEnd2 = () => {
-              shipBtn.classList.remove('looping');
-            };
-            shipWrap.addEventListener('animationend', onEnd2, { once: true });
-          }
+          // Do not auto-run loop on success; only on explicit click
 
           // Clear form
           form.reset();

@@ -689,7 +689,7 @@ h2 {
   width: 60px;
   height: 24px;
   transform-style: preserve-3d;
-  animation: ship-spin 12s linear infinite;
+  /* no constant spin; only animate on click */
 }
 
 .send-ship .ship-tail {
@@ -1012,7 +1012,7 @@ h2 {
 .send-ship.looping .ship-wrap {
   /* Use motion path when available for smooth loop */
   offset-path: path('M0,0 C 140,-120 160,140 0,0');
-  offset-rotate: auto;
+  offset-rotate: 0deg; /* keep arrow facing right, no revolving */
   animation: ship-loop-path 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
   will-change: transform, offset-distance;
   z-index: 20;
@@ -1032,12 +1032,11 @@ h2 {
     animation: ship-loop-fallback 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
   }
   @keyframes ship-loop-fallback {
-    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
-    20%  { transform: translate(40px, -90px) rotate(-40deg) scale(1.03); }
-    40%  { transform: translate(0px, -160px) rotate(-160deg) scale(1.06); }
-    60%  { transform: translate(-70px, -60px) rotate(-240deg) scale(1.04); }
-    80%  { transform: translate(-10px, -10px) rotate(-310deg) scale(1.02); }
-    100% { transform: translate(0, 0) rotate(-360deg) scale(1); }
+    0%   { transform: translate(0, 0) scale(1); }
+    25%  { transform: translate(60px, -110px) scale(1.04); }
+    50%  { transform: translate(0px, -180px) scale(1.07); }
+    75%  { transform: translate(-60px, -110px) scale(1.04); }
+    100% { transform: translate(0, 0) scale(1); }
   }
 }
 
