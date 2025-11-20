@@ -836,7 +836,7 @@ export function createPlanet() {
       geo.setAttribute('position', new THREE.BufferAttribute(bandPos[s], 3));
       bandGeos[s] = geo;
       const mat = new THREE.PointsMaterial({
-        color: 0xd5fa1b,
+        color: 0xff9008,
         size: 0.0055,
         transparent: true,
         opacity: 0.9,
