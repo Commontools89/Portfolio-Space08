@@ -29,6 +29,12 @@ exports.handler = async (event) => {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
     const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
     
+    // Build content variables exactly as Twilio expects
+    const variables = JSON.stringify({
+      "1": visitorName || 'Anonymous',
+      "2": preview || 'New chat'
+    });
+    
     const resp = await fetch(twilioUrl, {
       method: 'POST',
       headers: {
@@ -39,11 +45,8 @@ exports.handler = async (event) => {
         From: 'whatsapp:+14155238886',
         To: `whatsapp:${toWhatsApp}`,
         ContentSid: contentSid,
-        ContentVariables: JSON.stringify({
-          "1": visitorName || 'Anonymous',
-          "2": preview || 'New chat'
-        })
-      })
+        ContentVariables: variables
+      }).toString()
     });
     
     if (!resp.ok) {
