@@ -50,7 +50,7 @@
   align-items: center;
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(213, 250, 27, 0.2);
+  border: 2px solid rgba(213, 250, 27, 0.3);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
@@ -173,24 +173,19 @@
 /* Responsive sizing */
 @media (max-width: 768px) {
   .genai-chat-container {
-    padding: 80px 16px 40px;
-    max-height: 100vh;
-    min-height: 100vh;
-    overflow-x: hidden;
-    justify-content: flex-end;
-    gap: 16px;
+    padding: 100px 20px 50px;
+    max-height: none;
+    min-height: calc(100vh - 80px);
+    gap: 20px;
   }
   .input-wrapper {
     width: 100%;
     max-width: 100%;
-    padding: 0;
   }
   .chat-window-wrapper {
     width: 100%;
     max-width: 100%;
-    max-height: calc(100vh - 240px);
-    padding: 0;
-    margin-bottom: auto;
+    max-height: calc(100vh - 300px);
   }
   .chat-window {
     width: 100%;
@@ -198,9 +193,11 @@
     border-radius: 14px;
   }
   #ai-chat-form {
-    width: 100%;
+    width: 95%;
+    max-width: 500px;
     height: 52px;
     border-radius: 14px;
+    margin: 0 auto;
   }
   .input {
     font-size: 1em;
@@ -213,7 +210,7 @@
     font-size: 0.85em;
   }
   .chat-window-wrapper.visible .chat-window {
-    max-height: calc(100vh - 240px);
+    max-height: calc(100vh - 300px);
   }
   #ai-chat-messages {
     padding: 18px 14px;
@@ -230,10 +227,9 @@
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 768px) {
     .genai-chat-container {
-      padding-left: max(16px, env(safe-area-inset-left) + 8px);
-      padding-right: max(16px, env(safe-area-inset-right) + 8px);
-      padding-bottom: max(40px, env(safe-area-inset-bottom) + 30px);
-      padding-top: max(80px, env(safe-area-inset-top) + 60px);
+      padding-left: max(20px, env(safe-area-inset-left) + 12px);
+      padding-right: max(20px, env(safe-area-inset-right) + 12px);
+      padding-bottom: max(50px, env(safe-area-inset-bottom) + 40px);
     }
   }
 }
@@ -319,8 +315,8 @@
 .ai-row.assistant .ai-bubble {
   background: rgba(213, 250, 27, 0.06);
   color: #d5fa1b;
-  border: 1px solid rgba(213, 250, 27, 0.12);
+  border: 2px solid #6495ED;
   border-bottom-left-radius: 6px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3), 0 0 8px rgba(100, 149, 237, 0.2);
 }
 
