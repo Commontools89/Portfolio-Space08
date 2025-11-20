@@ -5,6 +5,8 @@ body, html {
   color: #ffffff;
   overflow-x: hidden;
   overflow-y: hidden;
+  background: #000; /* ensure notch/home areas are black */
+  height: 100%;
 }
 
 #sketch-holder {
@@ -1133,6 +1135,23 @@ h2 {
   inset: 0;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+#planetCanvas, #planet {
+  background: transparent;
+}
+
+/* Fill visual viewport on modern mobile (covers iOS notch/home) */
+@supports (height: 100svh) {
+  #planetCanvas { height: 100svh !important; }
+}
+@supports (height: 100dvh) {
+  #planetCanvas { height: 100dvh !important; }
+}
+/* iOS Safari fallback */
+@supports (-webkit-touch-callout: none) {
+  html, body { height: -webkit-fill-available; }
+  #planetCanvas { height: -webkit-fill-available !important; }
 }
 
 #planetCanvas:active {
