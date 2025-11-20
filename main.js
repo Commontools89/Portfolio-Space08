@@ -134,7 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!form || !input || !list || !win || !wrapper) return;
 
     const messages = [];
-    let notificationSent = false; // flag to send only once per session
+    let notificationSent = false;
+    let inactivityTimer = null;
+    const INACTIVITY_DELAY = 30000; // 30 seconds of inactivity before sending summary
 
     function appendBubble(role, text) {
       const row = document.createElement('div');
@@ -145,6 +147,53 @@ document.addEventListener('DOMContentLoaded', () => {
       row.appendChild(bubble);
       list.appendChild(row);
       list.scrollTop = list.scrollHeight;
+    }
+
+    function scheduleConversationSummary() {
+      // Clear existing timer
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      
+      // Schedule summary after inactivity
+      inactivityTimer = setTimeout(() => {
+        if (!notificationSent && messages.length >= 2) {
+          sendConversationSummary();
+        }
+      }, INACTIVITY_DELAY);
+    }
+
+    async function sendConversationSummary() {
+      if (notificationSent) return;
+      notificationSent = true;
+      
+      try {
+        // Build full conversation transcript
+        const transcript = messages.map((m, i) => 
+          `${m.role === 'user' ? 'Visitor' : 'MAIA'}: ${m.content}`
+        ).join(' | ');
+        
+        // Extract visitor name if possible
+        const userMsgs = messages.filter(m => m.role === 'user');
+        let visitorName = 'Anonymous';
+        for (let msg of userMsgs) {
+          if (msg.content.length < 30 && !msg.content.includes('@') && !msg.content.includes('?')) {
+            visitorName = msg.content.split(/[,\s]+/)[0];
+            break;
+          }
+        }
+        
+        await fetch('/.netlify/functions/send-sms', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            visitorName: visitorName,
+            preview: transcript,
+            timestamp: new Date().toLocaleString()
+          })
+        });
+        console.log('Conversation summary sent to WhatsApp');
+      } catch (err) {
+        console.error('Summary send error:', err);
+      }
     }
 
     async function callClaude() {
@@ -161,12 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
         messages.push({ role: 'assistant', content: reply });
         appendBubble('assistant', reply);
         
-        // Send notification only once per session when we have enough context
-        if (data?.contactInfo && !notificationSent) {
-          console.log('Contact info detected, sending notification...');
-          notificationSent = true; // prevent duplicate notifications
-          await sendSMSNotification(data.contactInfo);
-        }
+        // Reset inactivity timer after each message
+        scheduleConversationSummary();
       } catch (e) {
         console.error('Claude API error:', e);
         appendBubble('assistant', 'Oops, I had trouble responding. Please try again.');
