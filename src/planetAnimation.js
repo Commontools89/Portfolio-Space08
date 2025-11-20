@@ -760,7 +760,7 @@ export function createPlanet() {
   let particleSeed = Math.floor(Math.random() * 1e9) >>> 0;
   let simStartMs = Date.now();
   const particleRadius = radius * 2.0;
-  let particleCount = 8000; // slightly higher density around entire globe
+  let particleCount = 15000; // higher density around entire globe
   // Band shards per active window (so particles "transfer" between tabs)
   let bandPoints = [];
   let bandGeos = [];
@@ -837,7 +837,7 @@ export function createPlanet() {
       bandGeos[s] = geo;
       const mat = new THREE.PointsMaterial({
         color: 0xffa500,
-        size: 0.0063,
+        size: 0.0085,
         transparent: true,
         opacity: 0.95,
         depthWrite: false,
