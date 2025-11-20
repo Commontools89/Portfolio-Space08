@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: flex-start; /* always start from top */
   gap: 40px;
-  padding: 100px 28px 80px; /* more bottom padding to prevent cutoff */
+  padding: 100px 28px 32px; /* reduced bottom padding to move input up by ~48px (half inch) */
   box-sizing: border-box;
 }
 
@@ -61,7 +61,7 @@
   top: -22px;
   left: 28px;
   background: #ff8a00;
-  color: #87CEEB; /* sky blue text */
+  color: #000; /* black text */
   font-weight: bold;
   padding: 8px 18px;
   font-size: 15px;
