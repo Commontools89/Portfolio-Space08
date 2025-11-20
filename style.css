@@ -415,7 +415,14 @@ h2 {
     text-shadow: 0 0 2px #d5fa1b;
     font-size: clamp(28px, 9vw, 52px);
   }
-  #about h2 { text-shadow: none; }
+  #about h2 { 
+    text-shadow: none; 
+    top: 0; /* avoid pushing title under the notch on iOS */
+  }
+  #about .about-content { 
+    margin-top: 0; /* ensure paragraph is visible under the title on mobile */
+    padding-top: max(8px, env(safe-area-inset-top)); 
+  }
   #about h2::before,
   #about h2::after {
     mix-blend-mode: normal; /* remove additive glow */
