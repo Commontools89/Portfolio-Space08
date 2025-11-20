@@ -158,9 +158,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const reply = data?.reply || '...';
         messages.push({ role: 'assistant', content: reply });
         appendBubble('assistant', reply);
+        
+        // Check if Claude collected contact info and trigger email send
+        if (data?.contactInfo) {
+          await sendContactEmail(data.contactInfo);
+          appendBubble('assistant', '✓ Message sent to Manu! He\'ll get back to you soon.');
+        }
       } catch (e) {
         console.error('Claude API error:', e);
         appendBubble('assistant', 'Oops, I had trouble responding. Please try again.');
+      }
+    }
+
+    async function sendContactEmail(contactInfo) {
+      try {
+        await emailjs.send(
+          'service_c7qjp5g',
+          'template_svorfoe',
+          {
+            from_name: contactInfo.name || 'Website Visitor',
+            reply_to: contactInfo.email || '',
+            message: contactInfo.message || ''
+          }
+        );
+      } catch (err) {
+        console.error('EmailJS error:', err);
       }
     }
 

@@ -49,10 +49,30 @@ When asked about his personal life or relationships, feel free to mention he's c
     }
     const data = await resp.json();
     const text = (data && data.content && data.content[0] && data.content[0].text) || '';
+    
+    // Extract contact info if Claude collected it (simple pattern matching)
+    let contactInfo = null;
+    const conversationText = messages.map(m => m.content).join(' ');
+    const nameMatch = conversationText.match(/name[:\s]+([a-zA-Z\s]+?)(?:,|\.|email)/i);
+    const emailMatch = conversationText.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+    const messageMatch = conversationText.match(/message[:\s]+(.+?)(?:\.|$)/i);
+    
+    // If we have email and name, extract contact info
+    if (emailMatch && nameMatch) {
+      contactInfo = {
+        name: nameMatch[1].trim(),
+        email: emailMatch[1].trim(),
+        message: messageMatch ? messageMatch[1].trim() : conversationText.slice(-200)
+      };
+    }
+    
     return {
       statusCode: 200,
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ reply: text })
+      body: JSON.stringify({ 
+        reply: text,
+        contactInfo: contactInfo 
+      })
     };
   } catch (e) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Server error', detail: String(e && e.message || e) }) };
