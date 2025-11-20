@@ -754,7 +754,7 @@ h2 {
   box-sizing: content-box;
   display: flex;
   align-items: center;
-  background-color: #292524;
+  background-color: #000000;
   position: relative;
 }
 
@@ -767,7 +767,7 @@ h2 {
   outline: none;
   padding-left: 15px;
   padding-right: 10px;
-  background-color: #292524;
+  background-color: #000000;
   color: white;
   font-size: 1em;
   font-family: 'Bangers', cursive;
@@ -775,7 +775,7 @@ h2 {
 }
 
 .input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0px 1000px #292524 inset;
+  -webkit-box-shadow: 0 0 0px 1000px #000000 inset;
   -webkit-text-fill-color: #ffffff;
 }
 
@@ -853,9 +853,9 @@ h2 {
   width: 95px;
   border: none;
   border-radius: 15px;
-  color: rgb(0, 0, 0);
+  color: #d5fa1b;
   cursor: pointer;
-  background-color: #ffffff;
+  background-color: #000000;
   font-weight: 500;
   overflow: hidden;
   display: flex;
@@ -872,10 +872,11 @@ h2 {
   position: absolute;
   margin-right: 150px;
   transition: all 0.3s;
+  fill: #d5fa1b;
 }
 
 .Subscribe-btn:hover {
-  color: white;
+  color: #d5fa1b;
 }
 
 .Subscribe-btn:hover .arrow {
