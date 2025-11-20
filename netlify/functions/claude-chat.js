@@ -56,48 +56,12 @@ IMPORTANT: When collecting contact information, once you have their name, email,
     const data = await resp.json();
     const text = (data && data.content && data.content[0] && data.content[0].text) || '';
     
-    // Always send conversation transcript if there are 2+ user messages
-    let contactInfo = null;
-    const userMessages = messages.filter(m => m.role === 'user');
-    
-    if (userMessages.length >= 2) {
-      // Build full conversation transcript
-      const transcript = messages.map((m, i) => 
-        `${i+1}. ${m.role === 'user' ? 'Visitor' : 'MAIA'}: ${m.content}`
-      ).join('\n\n');
-      
-      // Try to extract email if provided
-      const fullConvo = messages.map(m => m.content).join(' ');
-      const emailMatch = fullConvo.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
-      
-      // Try to extract name (first short user message)
-      let name = 'Anonymous Visitor';
-      for (let msg of userMessages) {
-        const content = msg.content.trim();
-        if (content.length < 40 && !content.includes('@') && !content.includes('?')) {
-          const words = content.split(/[,\s]+/);
-          if (words.length <= 3) {
-            name = words[0];
-            break;
-          }
-        }
-      }
-      
-      contactInfo = {
-        name: name,
-        email: emailMatch ? emailMatch[1] : 'no-email-provided@manumalempati.dev',
-        message: `MAIA Conversation Transcript:\n\n${transcript}`
-      };
-      
-      console.log('[SERVER] Sending conversation transcript:', contactInfo.name, contactInfo.email);
-    }
-    
+    // Don't return contactInfo - let frontend handle sending summary after inactivity
     return {
       statusCode: 200,
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ 
-        reply: text,
-        contactInfo: contactInfo 
+        reply: text
       })
     };
   } catch (e) {
