@@ -1008,6 +1008,39 @@ h2 {
 .send-ship { position: relative; top: -12px; }
 .send-ship .ship-wrap { pointer-events: none; }
 
+/* Paper-rocket loop flight on click */
+.send-ship.looping .ship-wrap {
+  /* Use motion path when available for smooth loop */
+  offset-path: path('M0,0 C 140,-120 160,140 0,0');
+  offset-rotate: auto;
+  animation: ship-loop-path 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  will-change: transform, offset-distance;
+  z-index: 20;
+}
+
+@keyframes ship-loop-path {
+  0%   { offset-distance: 0%;   transform: scale(1); }
+  10%  { transform: scale(1.02); }
+  50%  { transform: scale(1.06); }
+  90%  { transform: scale(1.02); }
+  100% { offset-distance: 100%; transform: scale(1); }
+}
+
+/* Fallback for browsers without offset-path (approximate arc with transforms) */
+@supports not (offset-path: path('M0,0 L10,10')) {
+  .send-ship.looping .ship-wrap {
+    animation: ship-loop-fallback 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  }
+  @keyframes ship-loop-fallback {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+    20%  { transform: translate(40px, -90px) rotate(-40deg) scale(1.03); }
+    40%  { transform: translate(0px, -160px) rotate(-160deg) scale(1.06); }
+    60%  { transform: translate(-70px, -60px) rotate(-240deg) scale(1.04); }
+    80%  { transform: translate(-10px, -10px) rotate(-310deg) scale(1.02); }
+    100% { transform: translate(0, 0) rotate(-360deg) scale(1); }
+  }
+}
+
 .chat-input {
   width: 100%;
   box-sizing: border-box;
@@ -1048,6 +1081,7 @@ h2 {
   transition: transform 0.3s ease;
   padding: 0;
   z-index: 5;
+  overflow: visible; /* allow flight path outside button box */
 }
 
 .send-button svg {

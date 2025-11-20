@@ -129,6 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('contact-form');
     if (form) {
       const sendButton = form.querySelector('.send-button');
+      const shipBtn = form.querySelector('.send-ship');
+      const shipWrap = form.querySelector('.ship-wrap');
       
       // Button animations
       sendButton.addEventListener('mousedown', () => {
@@ -141,6 +143,16 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           sendButton.classList.remove('clicked');
         }, 400);
+      });
+
+      // Paper-rocket loop flight on click
+      sendButton.addEventListener('click', () => {
+        if (!shipBtn || !shipWrap) return;
+        shipBtn.classList.add('looping');
+        const onEnd = () => {
+          shipBtn.classList.remove('looping');
+        };
+        shipWrap.addEventListener('animationend', onEnd, { once: true });
       });
 
       // Form submission
@@ -192,13 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
           chatMessages.insertAdjacentHTML('beforeend', responseHTML);
           chatMessages.scrollTop = chatMessages.scrollHeight;
           
-          // Launch the ship animation
-          const shipBtn = form.querySelector('.send-ship');
-          if (shipBtn) {
-            shipBtn.classList.add('launching');
-            setTimeout(() => {
-              shipBtn.classList.remove('launching');
-            }, 800);
+          // Optionally trigger loop flight on success as well
+          if (shipBtn && shipWrap) {
+            shipBtn.classList.add('looping');
+            const onEnd2 = () => {
+              shipBtn.classList.remove('looping');
+            };
+            shipWrap.addEventListener('animationend', onEnd2, { once: true });
           }
 
           // Clear form
