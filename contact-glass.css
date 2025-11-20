@@ -4,11 +4,13 @@
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
+  max-height: calc(100vh - 140px); /* prevent overflow into header */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
-  padding: 50px 28px; /* extra padding to prevent border cutoff */
+  justify-content: flex-end; /* keep input at bottom */
+  gap: 20px;
+  padding: 20px 28px 30px;
   box-sizing: border-box;
 }
 
@@ -19,6 +21,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0; /* prevent input from shrinking */
 }
 
 .chat-window-wrapper {
@@ -26,11 +29,15 @@
   max-width: 680px;
   position: relative;
   display: none;
-  padding: 2px; /* ensure border isn't cut off */
+  padding: 2px;
+  flex: 1; /* take available space above input */
+  overflow: hidden;
+  max-height: calc(100vh - 280px); /* prevent overflow into header */
 }
 
 .chat-window-wrapper.visible {
-  display: block;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Glass-morphism input form */
