@@ -191,7 +191,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = (input.value || '').trim();
       if (!text) return;
       // reveal chat window wrapper (with animated borders) on first submit
-      if (!wrapper.classList.contains('visible')) wrapper.classList.add('visible');
+      if (!wrapper.classList.contains('visible')) {
+        wrapper.classList.add('visible');
+        // Add class to container to trigger layout shift
+        document.querySelector('.genai-chat-container')?.classList.add('chat-active');
+      }
       appendBubble('user', text);
       messages.push({ role: 'user', content: text });
       input.value = '';

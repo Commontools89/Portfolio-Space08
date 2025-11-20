@@ -16,9 +16,9 @@
 }
 
 /* When chat window is visible, shift to top layout */
-.genai-chat-container:has(.chat-window-wrapper.visible) {
+.genai-chat-container.chat-active {
   justify-content: flex-start;
-  padding-top: 60px; /* moved up more */
+  padding-top: 100px;
 }
 
 .input-wrapper {
@@ -233,9 +233,9 @@
   }
   
   /* When chat appears, move to top layout */
-  .genai-chat-container:has(.chat-window-wrapper.visible) {
+  .genai-chat-container.chat-active {
     justify-content: flex-start;
-    padding-top: 70px; /* moved up */
+    padding-top: 90px;
   }
   .input-wrapper {
     width: calc(100% - 8px);
@@ -297,8 +297,8 @@
     justify-content: center;
   }
   
-  .genai-chat-container:has(.chat-window-wrapper.visible) {
-    padding-top: 65px; /* moved up */
+  .genai-chat-container.chat-active {
+    padding-top: 85px;
     justify-content: flex-start;
   }
   #ai-chat-form {
@@ -330,8 +330,8 @@
     justify-content: center;
   }
   
-  .genai-chat-container:has(.chat-window-wrapper.visible) {
-    padding-top: 60px; /* moved up */
+  .genai-chat-container.chat-active {
+    padding-top: 80px;
     justify-content: flex-start;
   }
   #ai-chat-form {
