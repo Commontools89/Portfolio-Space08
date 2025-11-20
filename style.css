@@ -138,7 +138,7 @@ h2 {
   position: relative;
   /* keep the base text fixed; only pseudo-elements animate */
   animation: none;
-  top: -0.25in; /* lift heading slightly */
+  top: 0; /* no offset so content always shows below */
 }
 
 /* Right-center navigation arrow disabled */
@@ -563,7 +563,7 @@ h2 {
 
 /* Lift About body content to match heading shift (desktop only) */
 @media (min-width: 768px) {
-  #about .about-content { margin-top: -0.25in; }
+  #about .about-content { margin-top: 0; }
 }
 
 .contact-form {
