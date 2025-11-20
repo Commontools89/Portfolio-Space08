@@ -29,15 +29,60 @@
   max-width: 680px;
   position: relative;
   display: none;
-  padding: 2px;
-  flex: 1; /* take available space above input */
-  overflow: hidden;
-  max-height: calc(100vh - 280px); /* prevent overflow into header */
+  padding: 20px;
+  flex: 1;
+  max-height: calc(100vh - 280px);
+  background: #f0f0f0;
+  border: 4px solid #000;
+  transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
+  transform-style: preserve-3d;
+  transform: rotateX(5deg) rotateY(-5deg);
+  perspective: 1000px;
+  box-shadow: 15px 15px 0 #000;
 }
 
 .chat-window-wrapper.visible {
   display: flex;
   flex-direction: column;
+}
+
+.chat-window-wrapper:hover {
+  transform: rotateX(2deg) rotateY(-2deg) scale(1.02);
+  box-shadow: 30px 30px 0 -5px #ff8a00, 30px 30px 0 0 #000;
+}
+
+.chat-window-wrapper::before {
+  content: "CHAT WITH AI";
+  position: absolute;
+  top: -18px;
+  left: 25px;
+  background: #ff8a00;
+  color: #000;
+  font-weight: bold;
+  padding: 6px 14px;
+  font-size: 13px;
+  transform: translateZ(50px);
+  z-index: 10;
+  border: 3px solid #000;
+  font-family: 'Bangers', cursive;
+  letter-spacing: 1px;
+}
+
+.chat-window-wrapper::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  bottom: 0;
+  z-index: -1;
+  transform: translateZ(-50px);
+  background: linear-gradient(
+    45deg,
+    rgba(255, 138, 0, 0.3) 0%,
+    rgba(255, 138, 0, 0.1) 100%
+  );
+  filter: blur(25px);
 }
 
 /* Glass-morphism input form */
@@ -146,22 +191,18 @@
   transform: translateY(-50%) scale(0.92);
 }
 
-/* Glass-morphism chat window */
+/* Chat window inside the 3D wrapper */
 .chat-window {
-  width: calc(100% - 6px); /* account for border width */
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(18px);
-  border: 2.5px solid #ff8a00;
-  border-radius: 18px;
-  overflow-y: auto; /* enable vertical scrolling */
+  width: 100%;
+  height: 100%;
+  background: #000;
+  border: 3px solid #ff8a00;
+  border-radius: 12px;
+  overflow-y: auto;
   position: relative;
   z-index: 1;
-  max-height: 0;
-  opacity: 0;
-  box-shadow: 0 0 16px rgba(255, 138, 0, 0.25), 0 8px 32px rgba(0, 0, 0, 0.5);
-  transition: max-height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
-  box-sizing: border-box;
-  margin: 0 auto;
+  transform: translateZ(10px);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
 }
@@ -173,7 +214,7 @@
 /* Responsive sizing */
 @media (max-width: 768px) {
   .genai-chat-container {
-    padding: 100px 24px 50px;
+    padding: 4px 24px 50px; /* moved up significantly (~96px = 1 inch) */
     max-height: none;
     min-height: calc(100vh - 80px);
     gap: 20px;
@@ -226,7 +267,7 @@
 /* Small phones (iPhone SE, iPhone 12/13/14 mini, etc.) */
 @media (max-width: 430px) {
   .genai-chat-container {
-    padding: 90px 12px 40px;
+    padding: 0px 12px 40px; /* moved up by 1 inch */
   }
   #ai-chat-form {
     width: calc(100vw - 32px);
@@ -252,7 +293,7 @@
 /* Extra small phones (iPhone SE 1st gen, etc.) */
 @media (max-width: 375px) {
   .genai-chat-container {
-    padding: 85px 10px 35px;
+    padding: 0px 10px 35px; /* moved up by 1 inch */
   }
   #ai-chat-form {
     width: calc(100vw - 24px);
