@@ -128,11 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function setupGenAIChat() {
     const form = document.getElementById('ai-chat-form');
     const input = document.getElementById('ai-chat-input');
+    const wrapper = document.getElementById('ai-chat-window-wrapper');
     const win = document.getElementById('ai-chat-window');
     const list = document.getElementById('ai-chat-messages');
-    const shipBtn = form?.querySelector('.send-ship');
-    const shipWrap = form?.querySelector('.ship-wrap');
-    if (!form || !input || !list || !win) return;
+    if (!form || !input || !list || !win || !wrapper) return;
 
     const messages = [];
 
@@ -166,14 +165,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // No send animations; just normal click
-
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const text = (input.value || '').trim();
       if (!text) return;
-      // reveal square chat window on first submit
-      if (!win.classList.contains('visible')) win.classList.add('visible');
+      // reveal chat window wrapper (with animated borders) on first submit
+      if (!wrapper.classList.contains('visible')) wrapper.classList.add('visible');
       appendBubble('user', text);
       messages.push({ role: 'user', content: text });
       input.value = '';
