@@ -148,9 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function callClaude() {
       try {
-        const endpoint = (import.meta.env && import.meta.env.VITE_API_BASE_URL)
-          ? `${import.meta.env.VITE_API_BASE_URL}/api/claude`
-          : '/api/claude';
+        const endpoint = '/.netlify/functions/claude-chat';
         const resp = await fetch(endpoint, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -161,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messages.push({ role: 'assistant', content: reply });
         appendBubble('assistant', reply);
       } catch (e) {
+        console.error('Claude API error:', e);
         appendBubble('assistant', 'Oops, I had trouble responding. Please try again.');
       }
     }
