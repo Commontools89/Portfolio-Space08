@@ -160,17 +160,37 @@ document.addEventListener('DOMContentLoaded', () => {
         messages.push({ role: 'assistant', content: reply });
         appendBubble('assistant', reply);
         
-        // Check if Claude collected contact info and trigger email send
+        // Send email transcript and SMS notification
         if (data?.contactInfo) {
-          console.log('Contact info detected, sending email...');
+          console.log('Contact info detected, sending email + SMS...');
           const sent = await sendContactEmail(data.contactInfo);
           if (sent) {
-            appendBubble('assistant', '✓ Email sent successfully!');
+            console.log('Email sent successfully');
           }
+          // Send SMS notification
+          await sendSMSNotification(data.contactInfo);
         }
       } catch (e) {
         console.error('Claude API error:', e);
         appendBubble('assistant', 'Oops, I had trouble responding. Please try again.');
+      }
+    }
+
+    async function sendSMSNotification(contactInfo) {
+      try {
+        const preview = contactInfo.message.slice(0, 60);
+        await fetch('/.netlify/functions/send-sms', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            visitorName: contactInfo.name,
+            preview: preview,
+            timestamp: new Date().toLocaleString()
+          })
+        });
+        console.log('SMS notification sent');
+      } catch (err) {
+        console.error('SMS error:', err);
       }
     }
 
