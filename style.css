@@ -745,7 +745,7 @@ h2 {
 .darkBorderBg,
 .glow {
   max-height: 70px;
-  max-width: 850px; /* wider to support longer input */
+  max-width: 314px;
   height: 100%;
   width: 100%;
   position: absolute;
@@ -758,11 +758,11 @@ h2 {
 .input {
   background-color: #010201;
   border: none;
-  width: 750px; /* much longer input bar */
+  width: 301px;
   height: 56px;
   border-radius: 10px;
   color: white;
-  padding-inline: 20px 110px; /* left padding 20px, right padding for button 110px */
+  padding-inline: 59px;
   font-size: 18px;
   font-family: 'Bangers', cursive;
   letter-spacing: 0.5px;
@@ -786,16 +786,6 @@ h2 {
   position: relative;
 }
 
-#ai-chat-form {
-  position: relative;
-  width: fit-content;
-  height: 56px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  background-color: #010201;
-}
-
 #main:focus-within > #input-mask {
   display: none;
 }
@@ -807,7 +797,7 @@ h2 {
   position: absolute;
   background: linear-gradient(90deg, transparent, black);
   top: 18px;
-  left: 25px;
+  left: 70px;
 }
 
 #pink-mask {
@@ -816,8 +806,8 @@ h2 {
   height: 20px;
   position: absolute;
   background: #cf30aa;
-  top: 18px;
-  left: 25px;
+  top: 10px;
+  left: 5px;
   filter: blur(20px);
   opacity: 0.8;
   transition: all 2s;
@@ -825,33 +815,6 @@ h2 {
 
 #main:hover > #pink-mask {
   opacity: 0;
-}
-
-/* Responsive input sizing */
-@media (max-width: 768px) {
-  .input {
-    width: 320px;
-    font-size: 16px;
-    padding-inline: 15px 100px;
-  }
-  .white,
-  .border,
-  .darkBorderBg,
-  .glow {
-    max-width: 400px;
-  }
-}
-@media (min-width: 769px) and (max-width: 1024px) {
-  .input {
-    width: 500px;
-    padding-inline: 18px 105px;
-  }
-  .white,
-  .border,
-  .darkBorderBg,
-  .glow {
-    max-width: 600px;
-  }
 }
 
 .input::placeholder {
@@ -971,7 +934,7 @@ h2 {
 
 .white {
   max-height: 63px;
-  max-width: 850px;
+  max-width: 307px;
   border-radius: 10px;
   filter: blur(2px);
 }
@@ -1002,7 +965,7 @@ h2 {
 
 .border {
   max-height: 59px;
-  max-width: 845px;
+  max-width: 303px;
   border-radius: 11px;
   filter: blur(0.5px);
 }
@@ -1033,7 +996,7 @@ h2 {
 
 .darkBorderBg {
   max-height: 65px;
-  max-width: 860px;
+  max-width: 312px;
 }
 
 .darkBorderBg::before {
@@ -1100,7 +1063,7 @@ h2 {
   filter: blur(30px);
   opacity: 0.4;
   max-height: 130px;
-  max-width: 900px;
+  max-width: 354px;
 }
 
 .glow:before {
