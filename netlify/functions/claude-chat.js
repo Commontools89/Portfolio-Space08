@@ -54,37 +54,41 @@ IMPORTANT: When collecting contact information, once you have their name, email,
     
     // Extract contact info when email is present in conversation
     let contactInfo = null;
-    const fullConvo = messages.map(m => m.content).join(' ');
+    const fullConvo = messages.map(m => m.content).join('\n');
     const emailMatch = fullConvo.match(/([a-zA-Z0-9._+-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
     
-    // Trigger email if MAIA confirms sending OR if email was provided in last 2 messages
+    console.log('Email found:', emailMatch ? emailMatch[1] : 'none');
+    console.log('Claude reply:', text);
+    
+    // Trigger email if MAIA confirms sending
     const shouldSendEmail = text.toLowerCase().includes("send this to manu") || 
-                           text.toLowerCase().includes("i'll send") ||
-                           (emailMatch && messages.length >= 3);
+                           text.toLowerCase().includes("i'll send");
+    
+    console.log('Should send email:', shouldSendEmail);
     
     if (emailMatch && shouldSendEmail) {
       const userMessages = messages.filter(m => m.role === 'user');
       let name = 'Website Visitor';
-      let message = 'Contact request from website.';
+      let message = 'Contact request';
       
-      // Extract name (first short user message without @ or keywords)
+      // Simple extraction: find first message with a name-like pattern
       for (let msg of userMessages) {
         const content = msg.content.trim();
-        const lower = content.toLowerCase();
-        if (content.length < 30 && !content.includes('@') && 
-            !lower.includes('contact') && !lower.includes('message') &&
-            !lower.includes('email') && !content.includes('?')) {
-          name = content.split(',')[0].trim();
-          break;
+        // If short and no special chars, likely a name
+        if (content.length < 40 && !content.includes('@') && !content.includes('?')) {
+          const words = content.split(/[,\s]+/);
+          if (words.length <= 3) {
+            name = words[0]; // first word is usually the name
+            break;
+          }
         }
       }
       
-      // Extract message (last user message or one containing message keywords)
-      for (let i = userMessages.length - 1; i >= 0; i--) {
-        const content = userMessages[i].content;
-        if (content.length > 5 && !content.includes('@')) {
-          message = content;
-          break;
+      // Get last user message as the message content
+      if (userMessages.length > 0) {
+        const lastMsg = userMessages[userMessages.length - 1].content;
+        if (lastMsg && lastMsg.length > 3) {
+          message = lastMsg;
         }
       }
       
@@ -93,7 +97,7 @@ IMPORTANT: When collecting contact information, once you have their name, email,
         email: emailMatch[1],
         message: message
       };
-      console.log('Extracted contact info:', JSON.stringify(contactInfo));
+      console.log('[SERVER] Extracted contact info:', JSON.stringify(contactInfo));
     }
     
     return {
