@@ -173,21 +173,30 @@
 /* Responsive sizing */
 @media (max-width: 768px) {
   .genai-chat-container {
-    padding: 20px 16px 30px;
+    padding: 20px 12px 30px;
     max-height: calc(100vh - 120px);
+    overflow-x: hidden; /* prevent horizontal scroll */
+  }
+  .input-wrapper {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 8px;
+    box-sizing: border-box;
   }
   .chat-window-wrapper {
-    width: calc(100% - 12px); /* extra margin for border */
-    max-width: 95%;
+    width: 100%;
+    max-width: 100%;
     max-height: calc(100vh - 260px);
+    padding: 0 8px;
+    box-sizing: border-box;
   }
   .chat-window {
     width: 100%;
     border-width: 2px; /* thinner border on mobile */
   }
   #ai-chat-form {
-    width: calc(100% - 8px);
-    max-width: 95%;
+    width: 100%;
+    max-width: 100%;
     height: 50px;
   }
   .input {
@@ -197,12 +206,33 @@
   .Subscribe-btn {
     width: 90px;
     height: 38px;
+    right: 4px;
   }
   .chat-window-wrapper.visible .chat-window {
     max-height: 50vh;
   }
   #ai-chat-messages {
-    padding: 20px 16px;
+    padding: 20px 14px;
+  }
+  .ai-bubble {
+    max-width: 90%;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px) {
+    .genai-chat-container {
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+      padding-bottom: max(30px, env(safe-area-inset-bottom) + 20px);
+    }
+    #ai-chat-form {
+      width: calc(100% - 16px);
+    }
+    .chat-window {
+      width: calc(100% - 4px);
+    }
   }
 }
 
