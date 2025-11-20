@@ -166,13 +166,11 @@ document.addEventListener('DOMContentLoaded', () => {
       notificationSent = true;
       
       try {
-        // Build full conversation transcript
-        const transcript = messages.map((m, i) => 
-          `${m.role === 'user' ? 'Visitor' : 'MAIA'}: ${m.content}`
-        ).join(' | ');
+        // Build USER messages only (what they asked, not MAIA's replies)
+        const userMsgs = messages.filter(m => m.role === 'user');
+        const userQuestions = userMsgs.map(m => m.content).join(' | ');
         
         // Extract visitor name if possible
-        const userMsgs = messages.filter(m => m.role === 'user');
         let visitorName = 'Anonymous';
         for (let msg of userMsgs) {
           if (msg.content.length < 30 && !msg.content.includes('@') && !msg.content.includes('?')) {
@@ -186,11 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             visitorName: visitorName,
-            preview: transcript,
+            preview: userQuestions, // only user messages, not MAIA replies
             timestamp: new Date().toLocaleString()
           })
         });
-        console.log('Conversation summary sent to WhatsApp');
+        console.log('User questions summary sent to WhatsApp');
       } catch (err) {
         console.error('Summary send error:', err);
       }
