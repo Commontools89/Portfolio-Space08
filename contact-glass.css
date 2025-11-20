@@ -8,7 +8,7 @@
   flex-direction: column;
   align-items: center;
   gap: 28px;
-  padding: 50px 24px;
+  padding: 50px 28px; /* extra padding to prevent border cutoff */
   box-sizing: border-box;
 }
 
@@ -26,6 +26,7 @@
   max-width: 680px;
   position: relative;
   display: none;
+  padding: 2px; /* ensure border isn't cut off */
 }
 
 .chat-window-wrapper.visible {
