@@ -170,9 +170,22 @@
 
 /* Responsive sizing */
 @media (max-width: 768px) {
+  .genai-chat-container {
+    padding: 20px 16px 30px;
+    max-height: calc(100vh - 120px);
+  }
+  .chat-window-wrapper {
+    width: calc(100% - 12px); /* extra margin for border */
+    max-width: 95%;
+    max-height: calc(100vh - 260px);
+  }
+  .chat-window {
+    width: 100%;
+    border-width: 2px; /* thinner border on mobile */
+  }
   #ai-chat-form {
-    width: 90%;
-    max-width: 400px;
+    width: calc(100% - 8px);
+    max-width: 95%;
     height: 50px;
   }
   .input {
@@ -184,7 +197,10 @@
     height: 38px;
   }
   .chat-window-wrapper.visible .chat-window {
-    max-height: 55vh;
+    max-height: 50vh;
+  }
+  #ai-chat-messages {
+    padding: 20px 16px;
   }
 }
 
