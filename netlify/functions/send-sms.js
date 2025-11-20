@@ -1,4 +1,4 @@
-// Twilio WhatsApp notification handler
+// Twilio WhatsApp notification handler - sends alerts to your WhatsApp
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
