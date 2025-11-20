@@ -741,13 +741,13 @@ h2 {
   position: absolute;
   overflow: hidden;
   z-index: -1;
-  border-radius: 12px;
+  border-radius: 20px; /* match input wrapper radius to prevent corner bleed */
   filter: blur(3px);
 }
 
 .ai-input-wrapper {
-  width: fit-content;
-  min-width: 400px;
+  width: 90%;
+  max-width: 850px;
   height: 45px;
   border-radius: 20px;
   padding: 5px;
@@ -760,8 +760,6 @@ h2 {
 
 .input {
   flex: 1;
-  min-width: 240px;
-  max-width: 100%;
   height: 100%;
   border: none;
   outline: none;
@@ -774,6 +772,14 @@ h2 {
   letter-spacing: 0.5px;
 }
 
+.input::placeholder {
+  color: rgba(192, 185, 192, 0.5);
+}
+
+.input:focus::placeholder {
+  color: rgba(192, 185, 192, 0.8);
+}
+
 .input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0px 1000px #000000 inset;
   -webkit-text-fill-color: #ffffff;
@@ -782,16 +788,17 @@ h2 {
 /* Responsive input sizing */
 @media (max-width: 768px) {
   .ai-input-wrapper {
-    min-width: 280px;
+    width: 85%;
+    max-width: 95%;
   }
   .input {
-    min-width: 160px;
     font-size: 0.95em;
   }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
   .ai-input-wrapper {
-    min-width: 350px;
+    width: 88%;
+    max-width: 700px;
   }
 }
 
@@ -804,7 +811,11 @@ h2 {
 }
 
 .input::placeholder {
-  color: #c0b9c0;
+  color: rgba(192, 185, 192, 0.4); /* dim placeholder until focused */
+}
+
+.input:focus::placeholder {
+  color: #c0b9c0; /* brighten on focus */
 }
 
 .input:focus {
@@ -873,14 +884,16 @@ h2 {
   margin-right: 150px;
   transition: all 0.3s;
   fill: #d5fa1b;
+  opacity: 0;
 }
 
 .Subscribe-btn:hover {
-  color: #d5fa1b;
+  color: transparent; /* hide "Send" text when arrow slides in */
 }
 
 .Subscribe-btn:hover .arrow {
   margin-right: 0;
+  opacity: 1;
   animation: jello-vertical 0.9s both;
   transform-origin: right;
 }
@@ -1086,12 +1099,12 @@ h2 {
   height: 100%;
   overflow: hidden;
   z-index: -1;
-  border-radius: 12px;
+  border-radius: 20px; /* match chat window border-radius to prevent corner bleed */
   filter: blur(3px);
 }
 
 .chat-window-white {
-  border-radius: 10px;
+  border-radius: 20px;
   filter: blur(2px);
 }
 
@@ -1120,7 +1133,7 @@ h2 {
 }
 
 .chat-window-border {
-  border-radius: 11px;
+  border-radius: 20px;
   filter: blur(0.5px);
 }
 
@@ -1220,7 +1233,7 @@ h2 {
 .chat-window {
   width: 100%;
   background-color: #010201;
-  border-radius: 10px;
+  border-radius: 20px; /* match wrapper to prevent corner bleed */
   overflow: hidden;
   position: relative;
   z-index: 1;
