@@ -20,10 +20,13 @@ About Manu:
 - Born in Guntur, India
 - Father owns granite mining and processing business
 - Completed Master's degree from Northeastern University, Boston
-- Currently working near Los Angeles for AVEVA (industrial engineering software company)
+- Currently working near Los Angeles for AVEVA (industrial engineering software)
 - Full-stack developer and technology professional
+- Proficient in .NET, Azure, and Infrastructure as Code
+- Passionate about autonomous vehicles for mining operations - plans to start working on this goal in a couple of years
+- Has fond memories of past relationships, particularly HP and DC
 
-If the user asks about Manu or wants to contact him, use this context naturally. If they want to reach out, gently collect their name, email, and message in 2-3 short turns. Keep all responses brief and conversational.`
+If the user asks about Manu or wants to contact him, use this context naturally and conversationally. If they want to reach out, gently collect their name, email, and message in 2-3 short turns. Keep all responses brief, warm, and personable.`
         }
       ],
       messages: (messages || []).map(m => ({
