@@ -250,7 +250,7 @@
     width: calc(100% - 8px);
     max-width: 100%;
     margin: 0 auto;
-    margin-top: -100px; /* move input up from center */
+    margin-top: -150px; /* move input higher from center */
   }
   
   .genai-chat-container.chat-active .input-wrapper {
