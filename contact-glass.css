@@ -11,13 +11,14 @@
   align-items: center;
   justify-content: center; /* center content initially */
   gap: 25px;
-  padding: 0 28px 40px; /* no top padding initially - centers input higher */
+  padding: 0 28px 200px; /* large bottom padding to push input higher, like About name position */
   box-sizing: border-box;
 }
 
 /* When chat appears, add top padding but keep positions fixed */
 .genai-chat-container.chat-active {
   padding-top: 80px;
+  padding-bottom: 40px;
   justify-content: flex-start;
 }
 
