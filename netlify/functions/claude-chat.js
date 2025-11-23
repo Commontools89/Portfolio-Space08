@@ -34,6 +34,11 @@ About Manu:
 - Currently working near Los Angeles for AVEVA (industrial engineering software)
 - Full-stack developer and technology professional
 - Proficient in .NET, Azure, and Infrastructure as Code
+- Project Experience:
+  * Full-scale cloud deployments on AWS
+  * ML libraries and models: ARIMA, SARIMA forecasting
+  * Multiple websites and custom software development projects
+  * Current project: Migrating on-premises software data to cloud using sync queues (data replication in real-time)
 - Passionate about autonomous vehicles for mining operations - plans to start working on this goal in a couple of years
 - Relationship status: Currently single. He has had several past relationships and remains fond of two of his ex-girlfriends known as HP and DC.
 
