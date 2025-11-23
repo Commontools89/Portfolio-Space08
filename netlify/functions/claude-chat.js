@@ -24,11 +24,12 @@ About Manu:
 - Born in Guntur, India
 - Father owns granite mining and processing business
 - Education:
-  * LKG to 5th: Oxford Public School
-  * 6th: Little Flower School
-  * 7th-8th: Loyola School
-  * 9th-10th: Chaitanya School
-  * 11th-12th: Narayana Junior College
+  * LKG to 5th: Oxford Public School (CBSE syllabus)
+  * 6th: Little Flower School (CBSE)
+  * 7th-8th: Loyola School (ICSE syllabus)
+  * 9th: Chaitanya School (ICSE)
+  * 10th: Chaitanya School (State Board)
+  * 11th-12th: Narayana Junior College (State Board)
   * Undergraduate: SRM University, Chennai, India
   * Master's degree: Northeastern University, Boston
 - Currently working near Los Angeles for AVEVA (industrial engineering software)
