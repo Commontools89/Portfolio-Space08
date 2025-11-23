@@ -228,11 +228,18 @@
 /* Responsive sizing */
 @media (max-width: 768px) {
   .genai-chat-container {
-    padding: 90px 24px 50px; /* fixed top padding */
-    max-height: calc(100vh - 60px);
-    min-height: calc(100vh - 60px);
+    padding: 0 24px 50px;
+    max-height: 100vh;
+    min-height: 100vh;
     gap: 28px;
-    justify-content: flex-start; /* always from top */
+    justify-content: center; /* center input initially */
+  }
+  
+  /* When chat appears, shift to top layout */
+  .genai-chat-container.chat-active {
+    padding-top: 90px;
+    padding-bottom: 50px;
+    justify-content: flex-start;
   }
   
   .chat-window-wrapper {
@@ -243,6 +250,11 @@
     width: calc(100% - 8px);
     max-width: 100%;
     margin: 0 auto;
+    margin-top: -100px; /* move input up from center */
+  }
+  
+  .genai-chat-container.chat-active .input-wrapper {
+    margin-top: 0; /* reset when chat active */
   }
   .chat-window-wrapper {
     width: calc(100% - 8px);
