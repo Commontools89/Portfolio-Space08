@@ -11,7 +11,7 @@
   align-items: center;
   justify-content: center;
   gap: 25px;
-  padding: 0 28px 350px; /* even larger bottom padding to push input to upper-center */
+  padding: 0 28px 450px; /* very large bottom padding to push input higher */
   box-sizing: border-box;
 }
 
