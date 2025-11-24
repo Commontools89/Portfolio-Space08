@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const messages = [];
     let notificationSent = false;
     let inactivityTimer = null;
-    const INACTIVITY_DELAY = 30000; // 30 seconds of inactivity before sending summary
+    const INACTIVITY_DELAY = 10000; // 10 seconds of inactivity before sending summary (testing)
 
     function appendBubble(role, text) {
       const row = document.createElement('div');
@@ -153,9 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
       // Clear existing timer
       if (inactivityTimer) clearTimeout(inactivityTimer);
       
+      console.log('Scheduling summary in', INACTIVITY_DELAY / 1000, 'seconds...');
+      
       // Schedule summary after inactivity
       inactivityTimer = setTimeout(() => {
+        console.log('Inactivity timer fired. Messages:', messages.length, 'Notification sent:', notificationSent);
         if (!notificationSent && messages.length >= 2) {
+          console.log('Triggering conversation summary...');
           sendConversationSummary();
         }
       }, INACTIVITY_DELAY);
